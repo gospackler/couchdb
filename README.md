@@ -1,0 +1,2 @@
+# couchdb
+Minimalist CouchDB client

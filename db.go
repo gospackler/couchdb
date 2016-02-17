@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strconv"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/parnurzeal/gorequest"
 )
 
@@ -52,26 +53,61 @@ func (db *Database) Exists() (bool, error) {
 		Error  string `json:"error"`
 		DBName string `json:"db_name"`
 	}
-	_, body, errs := db.Req.Get("").End()
-	if len(errs) > 0 {
-		return false, errs[0]
-	}
+	_, body, _ := db.Req.Get("").End()
 	result := response{}
 	pErr := json.Unmarshal([]byte(body), &result)
 	if pErr != nil {
 		return false, pErr
 	}
-	if result.Error != "" {
-		return false, errors.New(result.Error)
-	}
-	if result.DBName != db.Name {
-		return false, errors.New("Couch returned database [" + result.DBName + "]")
+	if result.DBName != db.Name || result.Error != "" {
+		return false, nil
 	}
 
 	return true, nil
 }
 
 // Create creates a new database
-func (db *Database) Create(name string) error {
+func (db *Database) Create() error {
+	type response struct {
+		Error string `json:"error"`
+		Ok    bool   `json:"ok"`
+	}
+	_, body, _ := db.Req.Put("").End()
+	result := response{}
+	pErr := json.Unmarshal([]byte(body), &result)
+	log.Info(result)
+	if pErr != nil {
+		return pErr
+	}
+	if result.Error != "" {
+		return errors.New(result.Error)
+	}
+	if !result.Ok {
+		return errors.New("Couch returned failure when creating [" + db.Name + "]")
+	}
+
+	return nil
+}
+
+// Delete deletes database
+func (db *Database) Delete() error {
+	type response struct {
+		Error string `json:"error"`
+		Ok    bool   `json:"ok"`
+	}
+	_, body, _ := db.Req.Delete("").End()
+	result := response{}
+	pErr := json.Unmarshal([]byte(body), &result)
+	log.Info(result)
+	if pErr != nil {
+		return pErr
+	}
+	if result.Error != "" {
+		return errors.New(result.Error)
+	}
+	if !result.Ok {
+		return errors.New("Couch returned failure when creating [" + db.Name + "]")
+	}
+
 	return nil
 }

@@ -5,59 +5,95 @@ import (
 	"testing"
 )
 
-var client Client
-
-func TestNewClient(t *testing.T) {
-
-	client = NewClient("127.0.0.1", 5984)
-	fmt.Println(client.Host)
-	fmt.Println(client.Port)
-}
+const TESTDBNAME = "testdb"
+const HOST = "127.0.0.1"
+const PORT = 5984
 
 func TestNewDb(t *testing.T) {
-	dbName := "testdb"
-	dbObj := client.DB(dbName)
+	client := NewClient(HOST, PORT)
+	dbObj := client.DB(TESTDBNAME)
 	status, err := dbObj.Exists()
 	if err == nil {
-		t.Log("Test ran without errors ", dbName, " --> ", status)
+		t.Log("Test ran without errors: ", TESTDBNAME, " exists is ", status)
 	} else {
 		t.Error("Error checking Exists for DB")
 	}
 }
 
+// DBObject representation of the database under consideration.
+var DBObject Database
+
 func TestCreateDb(t *testing.T) {
-	dbName := "testdb"
-	dbObj := client.DB(dbName)
+	client := NewClient(HOST, PORT)
+	dbObj := client.DB(TESTDBNAME)
 	status, err := dbObj.Exists()
 	if err == nil {
-		fmt.Printf("Test ran without errors ", dbName, " --> ", status)
+		fmt.Printf("Test ran without errors ", TESTDBNAME, " --> ", status)
 		if status == false {
-			t.Log("Db does not exist, so let's create " + dbName)
+			t.Log("Db does not exist, so let's create " + TESTDBNAME)
 			err = dbObj.Create()
 			if err != nil {
 				t.Error("Error creating DB ", err)
 			} else {
-				t.Log("Successfully created db " + dbName)
+				t.Log("Successfully created db " + TESTDBNAME)
 			}
 		}
 	} else {
 		t.Error("Error running exists ", err)
 	}
+	DBObject = dbObj
 }
 
+type TestObj struct {
+	Name string
+	Age  int
+}
+
+var Id string
+var Rev string
+
+func TestCreateDocument(t *testing.T) {
+
+	testObj := &TestObj{
+		Name: "Fred",
+		Age:  18,
+	}
+	err, status := DBObject.CreateDocument(testObj)
+	if err != nil {
+		t.Error("Error creating Document ", err)
+	} else {
+		t.Log("Successfully created document " + TESTDBNAME)
+		t.Log("Document Id " + status.Id)
+		t.Log("Document Revision " + status.Rev)
+		Id = status.Id
+		Rev = status.Rev
+	}
+}
+
+func TestUpdateDocument(t *testing.T) {
+
+	testObj := &TestObj{
+		Name: "Gordon",
+		Age:  28,
+	}
+	err, status := DBObject.UpdateDocument(testObj, Id, Rev)
+	if err != nil {
+		t.Error("Error Updating Document", err)
+	} else {
+		t.Log("Successfully updated document")
+		t.Log("Document Id " + status.Id)
+		t.Log("Revision " + status.Rev)
+	}
+}
+
+func TestGetObject(t *testing.T) {
+	DBObject.RetrieveDocument(Id)
+}
 func TestDeleteDb(t *testing.T) {
-	dbName := "testdb"
-	dbObj := client.DB(dbName)
-	status, err := dbObj.Exists()
+	err := DBObject.Delete()
 	if err == nil {
-		if status == true {
-			t.Log("Db exists " + dbName)
-			err = dbObj.Delete()
-			if err == nil {
-				t.Log("Deleted existing db " + dbName + " Successful.")
-			} else {
-				t.Error("Error deleting "+dbName, " ", err)
-			}
-		}
+		t.Log("Deleted existing db " + TESTDBNAME + " Successful.")
+	} else {
+		t.Error("Error deleting "+TESTDBNAME, " ", err)
 	}
 }

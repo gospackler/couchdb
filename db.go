@@ -89,6 +89,71 @@ func (db *Database) Create() error {
 	return nil
 }
 
+type DocCreateResoponse struct {
+	Error string `json:"error"`
+	Ok    bool   `json:"ok"`
+	Id    string `json:"id"`
+	Rev   string `json:"rev"`
+}
+
+// Does the document update in couch given a wrapped couch object with DB Exist error status
+func (db *Database) updateDocument(err error, data string) (error, *DocCreateResoponse) {
+
+	result := &DocCreateResoponse{}
+
+	if err == nil {
+		_, body, _ := db.Req.Post("").Send(data).End()
+
+		pErr := json.Unmarshal([]byte(body), result)
+		log.Info(result)
+		if pErr != nil {
+			return pErr, result
+		}
+		if result.Error != "" {
+			return errors.New(result.Error), result
+		}
+		if !result.Ok {
+			return errors.New("Couch returned failure when creating [" + db.Name + "]"), result
+		}
+	} else {
+		return err, nil
+	}
+	return nil, result
+}
+
+//Creates a document in the database from an Object.
+func (db *Database) CreateDocument(obj interface{}) (error, *DocCreateResoponse) {
+
+	// Here is where the creation takes place.
+	couchWrappedObj := NewCouchWrapperCreate(obj)
+	err, data := couchWrappedObj.GetJSON()
+	return db.updateDocument(err, data)
+}
+
+func (db *Database) UpdateDocument(obj interface{}, id string, rev string) (error, *DocCreateResoponse) {
+	couchWrappedObj := NewCouchWrapperUpdate(obj)
+	couchWrappedObj.Id = id
+	couchWrappedObj.Rev = rev
+	err, data := couchWrappedObj.GetJSON()
+	return db.updateDocument(err, data)
+}
+
+//Retrieve document from the database.
+func (db *Database) RetrieveDocument(id string) (error, interface{}) {
+	// Use the get operation to get it.
+
+	// Response, string, error is what End() returns.
+	// We need to get the Body out of it excluding all the junk and then unmarshal the data.
+	couchObject := &CouchWrapperUpdate{}
+	_, body, _ := db.Req.Get(id).End()
+	err := json.Unmarshal([]byte(body), couchObject)
+	if err != nil {
+		return err, nil
+	}
+	log.Info(couchObject.Body)
+	return nil, couchObject.Body
+}
+
 // Delete deletes database
 func (db *Database) Delete() error {
 	type response struct {

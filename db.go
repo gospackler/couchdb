@@ -3,6 +3,7 @@ package couchdb
 import (
 	"encoding/json"
 	"errors"
+	//	"reflect"
 	"strconv"
 
 	log "github.com/Sirupsen/logrus"
@@ -97,12 +98,14 @@ type DocCreateResoponse struct {
 }
 
 // Does the document update in couch given a wrapped couch object with DB Exist error status
-func (db *Database) updateDocument(err error, data string) (error, *DocCreateResoponse) {
+func (db *Database) updateDocument(err error, data []byte) (error, *DocCreateResoponse) {
 
 	result := &DocCreateResoponse{}
 
 	if err == nil {
-		_, body, _ := db.Req.Post("").Send(data).End()
+
+		// TODO Fix the errs that are missed while making the request. Its dangerous to ignore.
+		_, body, _ := db.Req.Post("").Send(string(data)).End()
 
 		pErr := json.Unmarshal([]byte(body), result)
 		log.Info(result)
@@ -121,38 +124,61 @@ func (db *Database) updateDocument(err error, data string) (error, *DocCreateRes
 	return nil, result
 }
 
-//Creates a document in the database from an Object.
-func (db *Database) CreateDocument(obj interface{}) (error, *DocCreateResoponse) {
+//Creates a new document to save the data.
+func (db *Database) CreateDocument(obj []byte) (error, *DocCreateResoponse) {
 
 	// Here is where the creation takes place.
 	couchWrappedObj := NewCouchWrapperCreate(obj)
-	err, data := couchWrappedObj.GetJSON()
+	data, err := json.Marshal(couchWrappedObj)
 	return db.updateDocument(err, data)
 }
 
-func (db *Database) UpdateDocument(obj interface{}, id string, rev string) (error, *DocCreateResoponse) {
+//We always save the binary of the data.
+func (db *Database) UpdateDocument(obj []byte, id string, rev string) (error, *DocCreateResoponse) {
+
 	couchWrappedObj := NewCouchWrapperUpdate(obj)
 	couchWrappedObj.Id = id
 	couchWrappedObj.Rev = rev
-	err, data := couchWrappedObj.GetJSON()
+	data, err := json.Marshal(couchWrappedObj)
 	return db.updateDocument(err, data)
 }
 
 //Retrieve document from the database.
-func (db *Database) RetrieveDocument(id string) (error, interface{}) {
+//Will deal with it when the use case comes up, higher up the tree.
+func (db *Database) RetrieveDocument(id string) (error, []byte) {
 	// Use the get operation to get it.
 
 	// Response, string, error is what End() returns.
 	// We need to get the Body out of it excluding all the junk and then unmarshal the data.
-	couchObject := &CouchWrapperUpdate{}
 	_, body, _ := db.Req.Get(id).End()
-	err := json.Unmarshal([]byte(body), couchObject)
+
+	dummyRecv := &CouchWrapperUpdate{}
+	err := json.Unmarshal([]byte(body), dummyRecv)
+
 	if err != nil {
 		return err, nil
 	}
-	log.Info(couchObject.Body)
-	return nil, couchObject.Body
+
+	return nil, dummyRecv.Body
 }
+
+// Create View function
+
+//func (db *Database) GetView(viewName string) *View {
+// Check if view already exists.
+
+// Create it if it does not. (Map reduce fucnction)
+//}
+
+/*
+func (db *Database) ReadView(viewName string, fn func()) {
+	// Call GetView
+	//Return List of objects
+	// Otherwise panic
+
+	// Read the view given a View object.
+}
+*/
 
 // Delete deletes database
 func (db *Database) Delete() error {

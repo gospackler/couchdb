@@ -1,6 +1,7 @@
 package couchdb
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 )
@@ -58,7 +59,14 @@ func TestCreateDocument(t *testing.T) {
 		Name: "Fred",
 		Age:  18,
 	}
-	err, status := DBObject.CreateDocument(testObj)
+
+	strObj, err := json.Marshal(testObj)
+	t.Log("Saving Object:", strObj)
+	if err != nil {
+		t.Error("Error Marshalling testObj")
+	}
+
+	err, status := DBObject.CreateDocument(strObj)
 	if err != nil {
 		t.Error("Error creating Document ", err)
 	} else {
@@ -76,7 +84,13 @@ func TestUpdateDocument(t *testing.T) {
 		Name: "Gordon",
 		Age:  28,
 	}
-	err, status := DBObject.UpdateDocument(testObj, Id, Rev)
+
+	strObj, err := json.Marshal(testObj)
+	if err != nil {
+		t.Error("Error Marshalling testObj")
+	}
+
+	err, status := DBObject.UpdateDocument(strObj, Id, Rev)
 	if err != nil {
 		t.Error("Error Updating Document", err)
 	} else {
@@ -87,9 +101,16 @@ func TestUpdateDocument(t *testing.T) {
 }
 
 func TestGetObject(t *testing.T) {
-	DBObject.RetrieveDocument(Id)
+
+	err, jsonObj := DBObject.RetrieveDocument(Id)
+	if err != nil {
+		t.Error("Error ", err)
+	}
+
+	t.Log(string(jsonObj))
 }
 func TestDeleteDb(t *testing.T) {
+
 	err := DBObject.Delete()
 	if err == nil {
 		t.Log("Deleted existing db " + TESTDBNAME + " Successful.")

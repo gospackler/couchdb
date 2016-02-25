@@ -128,7 +128,7 @@ func (db *Database) updateDocument(err error, data []byte) (error, *DocCreateRes
 func (db *Database) CreateDocument(obj []byte) (error, *DocCreateResoponse) {
 
 	// Here is where the creation takes place.
-	couchWrappedObj := NewCouchWrapperCreate(obj)
+	couchWrappedObj := NewCouchWrapperCreate(string(obj))
 	data, err := json.Marshal(couchWrappedObj)
 	return db.updateDocument(err, data)
 }
@@ -136,7 +136,7 @@ func (db *Database) CreateDocument(obj []byte) (error, *DocCreateResoponse) {
 //We always save the binary of the data.
 func (db *Database) UpdateDocument(obj []byte, id string, rev string) (error, *DocCreateResoponse) {
 
-	couchWrappedObj := NewCouchWrapperUpdate(obj)
+	couchWrappedObj := NewCouchWrapperUpdate(string(obj))
 	couchWrappedObj.Id = id
 	couchWrappedObj.Rev = rev
 	data, err := json.Marshal(couchWrappedObj)
@@ -159,7 +159,7 @@ func (db *Database) RetrieveDocument(id string) (error, []byte) {
 		return err, nil
 	}
 
-	return nil, dummyRecv.Body
+	return nil, []byte(dummyRecv.Body)
 }
 
 // Create View function

@@ -60,21 +60,24 @@ func TestCreateDocument(t *testing.T) {
 		Age:  18,
 	}
 
-	strObj, err := json.Marshal(testObj)
-	t.Log("Saving Object:", strObj)
-	if err != nil {
-		t.Error("Error Marshalling testObj")
-	}
+	for i := 0; i < 10; i++ {
+		strObj, err := json.Marshal(testObj)
+		testObj.Age++
+		t.Log("Saving Object:", strObj)
+		if err != nil {
+			t.Error("Error Marshalling testObj")
+		}
 
-	err, status := DBObject.CreateDocument(strObj)
-	if err != nil {
-		t.Error("Error creating Document ", err)
-	} else {
-		t.Log("Successfully created document " + TESTDBNAME)
-		t.Log("Document Id " + status.Id)
-		t.Log("Document Revision " + status.Rev)
-		Id = status.Id
-		Rev = status.Rev
+		err, status := DBObject.CreateDocument(strObj)
+		if err != nil {
+			t.Error("Error creating Document ", err)
+		} else {
+			t.Log("Successfully created document " + TESTDBNAME)
+			t.Log("Document Id " + status.Id)
+			t.Log("Document Revision " + status.Rev)
+			Id = status.Id
+			Rev = status.Rev
+		}
 	}
 }
 
@@ -109,6 +112,8 @@ func TestGetObject(t *testing.T) {
 
 	t.Log(string(jsonObj))
 }
+
+/*
 func TestDeleteDb(t *testing.T) {
 
 	err := DBObject.Delete()
@@ -118,3 +123,4 @@ func TestDeleteDb(t *testing.T) {
 		t.Error("Error deleting "+TESTDBNAME, " ", err)
 	}
 }
+*/

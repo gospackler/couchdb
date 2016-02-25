@@ -10,7 +10,7 @@ type CouchWrapperCreate struct {
 	Author   string
 	PostDate time.Time
 	Tags     []string
-	Body     []byte //The JSON marshalled representation of the object.
+	Body     string //The JSON marshalled representation of the object.
 }
 
 type CouchWrapperUpdate struct {
@@ -20,10 +20,10 @@ type CouchWrapperUpdate struct {
 	Author   string
 	PostDate time.Time
 	Tags     []string
-	Body     []byte
+	Body     string
 }
 
-func NewCouchWrapperCreate(obj []byte) (wrap *CouchWrapperCreate) {
+func NewCouchWrapperCreate(obj string) (wrap *CouchWrapperCreate) {
 	wrap = &CouchWrapperCreate{
 		Subject:  "",
 		Author:   "get from user scope",
@@ -34,7 +34,7 @@ func NewCouchWrapperCreate(obj []byte) (wrap *CouchWrapperCreate) {
 }
 
 // Id and rev should be filled by the callee.
-func NewCouchWrapperUpdate(obj []byte) (wrap *CouchWrapperUpdate) {
+func NewCouchWrapperUpdate(obj string) (wrap *CouchWrapperUpdate) {
 	wrap = &CouchWrapperUpdate{
 		Id:       "",
 		Rev:      "",

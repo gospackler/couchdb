@@ -2,7 +2,6 @@ package couchdb
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 )
 
@@ -29,14 +28,10 @@ func TestCreateDb(t *testing.T) {
 	dbObj := client.DB(TESTDBNAME)
 	status, err := dbObj.Exists()
 	if err == nil {
-		fmt.Printf("Test ran without errors ", TESTDBNAME, " --> ", status)
 		if status == false {
-			t.Log("Db does not exist, so let's create " + TESTDBNAME)
 			err = dbObj.Create()
 			if err != nil {
 				t.Error("Error creating DB ", err)
-			} else {
-				t.Log("Successfully created db " + TESTDBNAME)
 			}
 		}
 	} else {
@@ -127,6 +122,15 @@ func TestGetObject(t *testing.T) {
 	json.Unmarshal(jsonObj, obj)
 	if obj.Id != Id {
 		t.Error("Id should be the same as requested")
+	}
+}
+
+func TestGetView(t *testing.T) {
+	err, data := DBObject.GetView("_design/by_age", "by_age")
+	if err != nil {
+		t.Error("Error :", err)
+	} else {
+		t.Log(string(data))
 	}
 }
 

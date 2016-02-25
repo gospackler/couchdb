@@ -143,12 +143,33 @@ func (db *Database) RetrieveDocument(id string) (error, []byte) {
 }
 
 // Create View function
+// Returns a set of bytes in a slice that contains each of the view object.
+// Expect calee to Unmarshal and use for their needs.
+func (db *Database) GetView(designDoc string, viewName string) (error, []byte) {
+	type ViewResponse struct {
+		Error  string `json:"error"`
+		Reason string `json:"reason"`
+	}
 
-//func (db *Database) GetView(viewName string) *View {
-// Check if view already exists.
+	prefix := designDoc + "/_view/" + viewName
+	log.Info("Getting view name " + prefix)
+	_, body, _ := db.Req.Get(prefix).End()
 
-// Create it if it does not. (Map reduce fucnction)
-//}
+	viewResp := &ViewResponse{}
+	err := json.Unmarshal([]byte(body), viewResp)
+
+	if err != nil {
+		log.Error(body)
+		return err, nil
+	}
+
+	if viewResp.Error != "" {
+		err = errors.New(viewResp.Reason)
+		return err, nil
+	}
+
+	return nil, []byte(body)
+}
 
 /*
 func (db *Database) ReadView(viewName string, fn func()) {

@@ -98,28 +98,22 @@ type DocCreateResoponse struct {
 }
 
 // Does the document update in couch given a wrapped couch object with DB Exist error status
-func (db *Database) updateDocument(err error, data []byte) (error, *DocCreateResoponse) {
+func (db *Database) updateDocument(data []byte) (error, *DocCreateResoponse) {
+
+	// TODO Fix the errs that are missed while making the request. Its dangerous to ignore.
+	_, body, _ := db.Req.Post("").Send(string(data)).End()
 
 	result := &DocCreateResoponse{}
-
-	if err == nil {
-
-		// TODO Fix the errs that are missed while making the request. Its dangerous to ignore.
-		_, body, _ := db.Req.Post("").Send(string(data)).End()
-
-		pErr := json.Unmarshal([]byte(body), result)
-		log.Info(result)
-		if pErr != nil {
-			return pErr, result
-		}
-		if result.Error != "" {
-			return errors.New(result.Error), result
-		}
-		if !result.Ok {
-			return errors.New("Couch returned failure when creating [" + db.Name + "]"), result
-		}
-	} else {
-		return err, nil
+	pErr := json.Unmarshal([]byte(body), result)
+	log.Info(result)
+	if pErr != nil {
+		return pErr, result
+	}
+	if result.Error != "" {
+		return errors.New(result.Error), result
+	}
+	if !result.Ok {
+		return errors.New("Couch returned failure when creating [" + db.Name + "]"), result
 	}
 	return nil, result
 }
@@ -127,20 +121,13 @@ func (db *Database) updateDocument(err error, data []byte) (error, *DocCreateRes
 //Creates a new document to save the data.
 func (db *Database) CreateDocument(obj []byte) (error, *DocCreateResoponse) {
 
-	// Here is where the creation takes place.
-	couchWrappedObj := NewCouchWrapperCreate(string(obj))
-	data, err := json.Marshal(couchWrappedObj)
-	return db.updateDocument(err, data)
+	return db.updateDocument(obj)
 }
 
 //We always save the binary of the data.
-func (db *Database) UpdateDocument(obj []byte, id string, rev string) (error, *DocCreateResoponse) {
+func (db *Database) UpdateDocument(obj []byte) (error, *DocCreateResoponse) {
 
-	couchWrappedObj := NewCouchWrapperUpdate(string(obj))
-	couchWrappedObj.Id = id
-	couchWrappedObj.Rev = rev
-	data, err := json.Marshal(couchWrappedObj)
-	return db.updateDocument(err, data)
+	return db.updateDocument(obj)
 }
 
 //Retrieve document from the database.
@@ -152,14 +139,7 @@ func (db *Database) RetrieveDocument(id string) (error, []byte) {
 	// We need to get the Body out of it excluding all the junk and then unmarshal the data.
 	_, body, _ := db.Req.Get(id).End()
 
-	dummyRecv := &CouchWrapperUpdate{}
-	err := json.Unmarshal([]byte(body), dummyRecv)
-
-	if err != nil {
-		return err, nil
-	}
-
-	return nil, []byte(dummyRecv.Body)
+	return nil, []byte(body)
 }
 
 // Create View function

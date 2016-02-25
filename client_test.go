@@ -46,8 +46,8 @@ func TestCreateDb(t *testing.T) {
 }
 
 type TestObj struct {
-	Name string
-	Age  int
+	Name string `json:"name"`
+	Age  int    `json:"age"`
 }
 
 var Id string
@@ -83,17 +83,25 @@ func TestCreateDocument(t *testing.T) {
 
 func TestUpdateDocument(t *testing.T) {
 
-	testObj := &TestObj{
-		Name: "Gordon",
-		Age:  28,
+	type UpdateObj struct {
+		CouchWrapperUpdate
+		TestObj
 	}
+
+	testObj := &UpdateObj{}
+
+	testObj.Id = Id
+	testObj.Rev = Rev
+
+	testObj.Name = "Fred Updated"
+	testObj.Age = 25
 
 	strObj, err := json.Marshal(testObj)
 	if err != nil {
 		t.Error("Error Marshalling testObj")
 	}
 
-	err, status := DBObject.UpdateDocument(strObj, Id, Rev)
+	err, status := DBObject.UpdateDocument(strObj)
 	if err != nil {
 		t.Error("Error Updating Document", err)
 	} else {
@@ -110,10 +118,18 @@ func TestGetObject(t *testing.T) {
 		t.Error("Error ", err)
 	}
 
-	t.Log(string(jsonObj))
+	type UpdateObj struct {
+		CouchWrapperUpdate
+		TestObj
+	}
+
+	obj := &UpdateObj{}
+	json.Unmarshal(jsonObj, obj)
+	if obj.Id != Id {
+		t.Error("Id should be the same as requested")
+	}
 }
 
-/*
 func TestDeleteDb(t *testing.T) {
 
 	err := DBObject.Delete()
@@ -123,4 +139,3 @@ func TestDeleteDb(t *testing.T) {
 		t.Error("Error deleting "+TESTDBNAME, " ", err)
 	}
 }
-*/

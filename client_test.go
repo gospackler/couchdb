@@ -125,6 +125,14 @@ func TestGetObject(t *testing.T) {
 	}
 }
 
+//TODO: Only one design can be added, extend to multiple as soon as possible.
+func TestCreateView(t *testing.T) {
+	err, _ := DBObject.CreateView("by_age", "doc", "doc.age < 22", "doc.age, doc.name")
+	if err != nil {
+		t.Error("Error creating view", err)
+	}
+}
+
 func TestGetView(t *testing.T) {
 	err, data := DBObject.GetView("_design/by_age", "by_age")
 	if err != nil {

@@ -1,9 +1,9 @@
+//File contains all the db related functions of couch
 package couchdb
 
 import (
 	"encoding/json"
 	"errors"
-	//	"reflect"
 	"strconv"
 
 	log "github.com/Sirupsen/logrus"
@@ -11,10 +11,11 @@ import (
 )
 
 // Database defintes a database client
+// It can be used to get Documents and Views
 type Database struct {
 	Name    string
-	Client  *Client
 	BaseURL string
+	Client  *Client
 	Req     Request
 }
 
@@ -90,68 +91,13 @@ func (db *Database) Create() error {
 	return nil
 }
 
-type DocCreateResoponse struct {
-	Error string `json:"error"`
-	Ok    bool   `json:"ok"`
-	Id    string `json:"id"`
-	Rev   string `json:"rev"`
-}
-
-// Does the document update in couch given a wrapped couch object with DB Exist error status
-func (db *Database) updateDocument(data []byte) (error, *DocCreateResoponse) {
-
-	// TODO Fix the errs that are missed while making the request. Its dangerous to ignore.
-	_, body, _ := db.Req.Post("").Send(string(data)).End()
-
-	result := &DocCreateResoponse{}
-	pErr := json.Unmarshal([]byte(body), result)
-	log.Info(result)
-	if pErr != nil {
-		return pErr, result
-	}
-	if result.Error != "" {
-		return errors.New(result.Error), result
-	}
-	if !result.Ok {
-		return errors.New("Couch returned failure when creating [" + db.Name + "]"), result
-	}
-	return nil, result
-}
-
-//Creates a new document to save the data.
-func (db *Database) CreateDocument(obj []byte) (error, *DocCreateResoponse) {
-
-	return db.updateDocument(obj)
-}
-
-//We always save the binary of the data.
-func (db *Database) UpdateDocument(obj []byte) (error, *DocCreateResoponse) {
-
-	return db.updateDocument(obj)
-}
-
-//Retrieve document from the database.
-//Will deal with it when the use case comes up, higher up the tree.
-func (db *Database) RetrieveDocument(id string) (error, []byte) {
-	// Use the get operation to get it.
-
-	// Response, string, error is what End() returns.
-	// We need to get the Body out of it excluding all the junk and then unmarshal the data.
-	_, body, _ := db.Req.Get(id).End()
-
-	return nil, []byte(body)
-}
-
-// Create View function
-// Returns a set of bytes in a slice that contains each of the view object.
-// Expect calee to Unmarshal and use for their needs.
 func (db *Database) GetView(designDoc string, viewName string) (error, []byte) {
 	type ViewResponse struct {
 		Error  string `json:"error"`
 		Reason string `json:"reason"`
 	}
 
-	prefix := designDoc + "/_view/" + viewName
+	prefix := "_design/" + designDoc + "/_view/" + viewName
 	log.Info("Getting view name " + prefix)
 	_, body, _ := db.Req.Get(prefix).End()
 
@@ -170,16 +116,6 @@ func (db *Database) GetView(designDoc string, viewName string) (error, []byte) {
 
 	return nil, []byte(body)
 }
-
-/*
-func (db *Database) ReadView(viewName string, fn func()) {
-	// Call GetView
-	//Return List of objects
-	// Otherwise panic
-
-	// Read the view given a View object.
-}
-*/
 
 // Delete deletes database
 func (db *Database) Delete() error {

@@ -11,9 +11,12 @@ document.go --> Deals with the creation and updating of documents in the db.
 
 ## Running Tests. 
 
+Make sure there is a couch instane running on default port (5984) for it to work. 
+
+Have disabled the DeleteDB for now so the DB created would persist.
+
+$ export GOPATH=$PWD
+$ go get -a
 $ go test -v
 
-The *_test fils contains the tests written.
-
-		
-
+The *_test fils contains the tests written.	

@@ -35,8 +35,15 @@ func TestGetView(t *testing.T) {
 	}
 }
 
-func TestRetreiveDoc(t *testing.T) {
+func TestRetreiveUpdateDesignDoc(t *testing.T) {
 
-	RetreiveDocFromDb("test_design", &DBObject)
-
+	err, desDoc := RetreiveDocFromDb("test_design", &DBObject)
+	if err == nil {
+		desDoc.Views[0].Name = "test_view_updated"
+		desDoc.RevStatus = true
+		err := desDoc.SaveDoc()
+		if err != nil {
+			t.Error(err)
+		}
+	}
 }

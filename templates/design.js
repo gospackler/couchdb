@@ -1,5 +1,8 @@
 {
-	"_id": "_design/{{.Id}}",
+	"_id": "{{.Id}}",
+	{{if .RevStatus}}
+	"_rev":"{{.Rev}}",
+	{{end}}
 	"views": {
 		{{range .Views}}
 

@@ -35,53 +35,68 @@ func NewView(name string, varName string, condition string, emitStr string) (vie
 }
 
 type DesignDoc struct {
-	Id       string //The id of the document
-	Rev      string
-	Views    []*View
-	LastView *View
-	Db       *Database
+	Id        string //The id of the document
+	Rev       string
+	Views     []*View
+	LastView  *View
+	Db        *Database
+	RevStatus bool
 }
 
 func NewDesignDoc(id string, db *Database) (doc *DesignDoc) {
 
 	doc = &DesignDoc{
-		Id: id,
+		Id: "_design/" + id,
 		Db: db,
 	}
 	return
 }
 
-func RetreiveDocFromDb(id string, db *Database) (error, *DesignDoc) {
+func RetreiveDocFromDb(id string, db *Database) (err error, desDoc *DesignDoc) {
+
+	type ViewLine struct {
+		Map string `"json:map"`
+	}
 
 	type ViewObj struct {
-		ActualViews map[string]string
+		Map    string `json:"map"`
+		Reduce string `json:"reduce"`
 	}
 
 	type TempRetrieve struct {
-		Id       string  `"json:_id"`
-		Rev      string  `"json:_rev"`
-		Language string  `"json:language"`
-		Views    ViewObj `"json:views"`
+		Id       string             `json:"_id"`
+		Rev      string             `json:"_rev"`
+		Language string             `json:"language"`
+		Views    map[string]ViewObj `json:"views"`
 	}
 
-	designRet := &TempRetrieve{}
+	tempRet := &TempRetrieve{}
 	doc := NewDocument("_design/"+id, "", db)
 	data, err := doc.GetDocument()
 	if err == nil {
-		fmt.Println(string(data))
-		err = json.Unmarshal(data, designRet)
+		fmt.Println("Data Read ", string(data))
+		err = json.Unmarshal(data, tempRet)
 		if err != nil {
 			fmt.Println(err)
 		} else {
-			for key, value := range designRet.Views.ActualViews {
-				fmt.Println("Key:", key, " Value", value)
+			fmt.Println("Unmarshalled Json", tempRet)
+			desDoc = &DesignDoc{} // allocating memory
+			desDoc.Id = tempRet.Id
+			desDoc.Db = db
+			desDoc.Rev = tempRet.Rev
+			for viewName, Data := range tempRet.Views {
+				view := &View{}
+				view.Name = viewName
+				view.RawStatus = true
+				view.RawJson = Data.Map
+				desDoc.AddView(view)
 			}
-			fmt.Println(designRet)
 		}
+
 	} else {
 		fmt.Println(err)
 	}
-	return err, nil
+	return err, desDoc
 }
 
 func (doc *DesignDoc) AddView(view *View) {

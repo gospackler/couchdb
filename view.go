@@ -9,6 +9,8 @@ package couchdb
 
 import (
 	"bytes"
+	"encoding/json"
+	"fmt"
 	"text/template"
 )
 
@@ -47,6 +49,39 @@ func NewDesignDoc(id string, db *Database) (doc *DesignDoc) {
 		Db: db,
 	}
 	return
+}
+
+func RetreiveDocFromDb(id string, db *Database) (error, *DesignDoc) {
+
+	type ViewObj struct {
+		ActualViews map[string]string
+	}
+
+	type TempRetrieve struct {
+		Id       string  `"json:_id"`
+		Rev      string  `"json:_rev"`
+		Language string  `"json:language"`
+		Views    ViewObj `"json:views"`
+	}
+
+	designRet := &TempRetrieve{}
+	doc := NewDocument("_design/"+id, "", db)
+	data, err := doc.GetDocument()
+	if err == nil {
+		fmt.Println(string(data))
+		err = json.Unmarshal(data, designRet)
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			for key, value := range designRet.Views.ActualViews {
+				fmt.Println("Key:", key, " Value", value)
+			}
+			fmt.Println(designRet)
+		}
+	} else {
+		fmt.Println(err)
+	}
+	return err, nil
 }
 
 func (doc *DesignDoc) AddView(view *View) {

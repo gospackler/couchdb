@@ -34,3 +34,9 @@ func TestGetView(t *testing.T) {
 		t.Log(string(data))
 	}
 }
+
+func TestRetreiveDoc(t *testing.T) {
+
+	RetreiveDocFromDb("test_design", &DBObject)
+
+}

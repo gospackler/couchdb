@@ -3,11 +3,11 @@ Minimalist CouchDB client
 
 ## Understanding.
 
-* ** client.go ** - represents the couchdb client for the others to use.
-* ** db.go ** - This is the low level db interface for the object. (Couch works on rest.)
-* ** dbrequests ** - Wrapper for all requests from couch.
-* ** view.go ** - Deals with creation of views.
-* ** document.go ** - Deals with the creation and updating of documents in the db.
+* **client.go** - represents the couchdb client for the others to use.
+* **db.go** - This is the low level db interface for the object. (Couch works on rest.)
+* **dbrequests** - Wrapper for all requests from couch.
+* **view.go** - Deals with creation of views.
+* **document.go** - Deals with the creation and updating of documents in the db.
 
 ## Running Tests. 
 
@@ -21,23 +21,23 @@ $ go test -v
 
 ## Example Usage
 
-For any operation, there is a DBOBject which represents a connection to a database in couchdb client.
+For any operation, there is a Database Object which represents a connection to a database in couchdb client.
 
 ```go
 client := NewClient("127.0.0.1", 5984) // Creates the client conenction.
 dbObj := client.DB("testdb") //Db object which represents the connection to db.
 ```
 
-Create and Existence test can done for the DBObj
+Exists checks if the database exists.
+Create can create the database if it does not exist.
 
 ```go
 status, err := dbObj.Exists() // Status contains the status of the check
-
 err := dbObj.Create() //Creates a new database with the dbName passed to the object
 ```
+## Documents
 
-Creating a new document can be done as follows for saving an object obj
-
+Creating a new document can be done as follows. Any json can be save and the example below shows how to Marshal an object.
 ```go
 doc := NewDocument("", "", &DBObject) //args - ID and Revison of the docuemnt to pickup
 byteObj, err := json.Marshal(obj)
@@ -49,8 +49,7 @@ byteObj, err = json.Marshal(obj)
 err = doc.Update((byteObj)
 ```
 
-Getting the document from DB. To get the object back, the way to go about it would be.
-The New Object needs to have the wrapper in it to pick up the unmarshalled Id and Revision.
+To get the object back, the way to go about it would be to wrap the object with CouchWrapper which can take care of the extra information that comes back.
 
 ```go
 	doc := NewDocument(Id, Rev, &DBObject) //Rev can be empty and not used right now, have it there for if present case.
@@ -67,11 +66,10 @@ The New Object needs to have the wrapper in it to pick up the unmarshalled Id an
 	obj := &UpdateObj{}
 	json.Unmarshal(jsonObj, obj)
 ```
-
-View has two parts- DesignDoc and The View
-DesignDOc is the representation of the design Document. Each design Document can have multiple Views assosciated with it. 
-
-The example below shows how to come up with a Multiple View
+## Views
+View has two parts- DesignDoc and View
+DesignDoc is the representation of the design Document. Each design Document can have multiple Views assosciated with it. 
+The example below shows how to come up with a designDocument contating multiple views.
 
 ```go
 
@@ -109,7 +107,7 @@ Requesting a view.
 	}
 ```
 
-The views in designDOcuments can be updated as well.
+The views in designDocuments can be updated as well.
 
 ```go
 

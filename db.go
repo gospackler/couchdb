@@ -1,3 +1,4 @@
+//File contains all the db related functions of couch
 package couchdb
 
 import (
@@ -10,10 +11,11 @@ import (
 )
 
 // Database defintes a database client
+// It can be used to get Documents and Views
 type Database struct {
 	Name    string
-	Client  *Client
 	BaseURL string
+	Client  *Client
 	Req     Request
 }
 
@@ -87,6 +89,32 @@ func (db *Database) Create() error {
 	}
 
 	return nil
+}
+
+func (db *Database) GetView(designDoc string, viewName string) (error, []byte) {
+	type ViewResponse struct {
+		Error  string `json:"error"`
+		Reason string `json:"reason"`
+	}
+
+	prefix := "_design/" + designDoc + "/_view/" + viewName
+	log.Info("Getting view name " + prefix)
+	_, body, _ := db.Req.Get(prefix).End()
+
+	viewResp := &ViewResponse{}
+	err := json.Unmarshal([]byte(body), viewResp)
+
+	if err != nil {
+		log.Error(body)
+		return err, nil
+	}
+
+	if viewResp.Error != "" {
+		err = errors.New(viewResp.Reason)
+		return err, nil
+	}
+
+	return nil, []byte(body)
 }
 
 // Delete deletes database

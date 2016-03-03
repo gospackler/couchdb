@@ -1,9 +1,8 @@
 package couchdb
 
 import (
-	"path"
-
 	"github.com/parnurzeal/gorequest"
+	"path"
 )
 
 // Request defines a base request used in DB connections

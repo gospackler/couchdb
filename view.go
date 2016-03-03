@@ -54,10 +54,6 @@ func NewDesignDoc(id string, db *Database) (doc *DesignDoc) {
 
 func RetreiveDocFromDb(id string, db *Database) (err error, desDoc *DesignDoc) {
 
-	type ViewLine struct {
-		Map string `"json:map"`
-	}
-
 	type ViewObj struct {
 		Map    string `json:"map"`
 		Reduce string `json:"reduce"`

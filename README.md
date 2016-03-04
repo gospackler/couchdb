@@ -15,7 +15,7 @@ Minimalist CouchDB client
 * **view.go** - Deals with creation of views.
 * **document.go** - Deals with the creation and updating of documents in the db.
 
-## Running Tests.
+## Running Tests
 
 Make sure there is a couch instane running on default port (5984) for it to work. Have disabled the DeleteDB for now so the DB created would persist.
 

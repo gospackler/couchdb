@@ -91,13 +91,13 @@ func (db *Database) Create() error {
 	return nil
 }
 
-func (db *Database) GetView(designDoc string, viewName string) (error, []byte) {
+func (db *Database) GetView(docName string, viewName string) (error, []byte) {
 	type ViewResponse struct {
 		Error  string `json:"error"`
 		Reason string `json:"reason"`
 	}
 
-	prefix := "_design/" + designDoc + "/_view/" + viewName
+	prefix := docName + "/_view/" + viewName
 	log.Info("Getting view name " + prefix)
 	_, body, _ := db.Req.Get(prefix).End()
 

@@ -45,5 +45,7 @@ func TestRetreiveUpdateDesignDoc(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
+	} else {
+		t.Error("Error while updating document")
 	}
 }

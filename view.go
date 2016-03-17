@@ -1,4 +1,4 @@
-//This is the space where all the view Related functions for couch go in
+// This is the space where all the view Related functions for couch go in
 
 // View is part of a table. Views are made making use of the map reduce fuctions.
 // The id of the view should start with _design/
@@ -11,7 +11,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"text/template"
 )
 
 type View struct {
@@ -105,21 +104,36 @@ func (doc *DesignDoc) AddView(view *View) {
 	}
 }
 
-func (doc *DesignDoc) CreateDoc(tempFile string) (error, []byte) {
+func (doc *DesignDoc) CheckExists(viewName string) (exists bool) {
 
-	tmpl, err := template.ParseFiles(tempFile)
-	if err != nil {
-		return err, nil
+	exists = false // should be false by default.
+	for _, view := range doc.Views {
+		if viewName == view.Name {
+			exists = true
+			return
+		}
 	}
+	if doc.LastView != nil {
+		if viewName == doc.LastView.Name {
+			exists = true
+			return
+		}
+	}
+	return
+}
+
+// Works on the default Global value and not on config files.
+func (doc *DesignDoc) CreateDoc() (error, []byte) {
+
 	buffer := &bytes.Buffer{}
-	err = tmpl.Execute(buffer, doc)
+	err := DESIGNTMPL.Execute(buffer, doc)
 	return err, buffer.Bytes()
 }
 
 func (doc *DesignDoc) SaveDoc() (err error) {
 
 	dbDoc := NewDocument("", "", doc.Db)
-	err, data := doc.CreateDoc("templates/design.js")
+	err, data := doc.CreateDoc()
 	if err == nil {
 		err = dbDoc.Create(data)
 	}

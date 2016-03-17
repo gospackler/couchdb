@@ -4,6 +4,8 @@ import (
 	"testing"
 )
 
+var desDoc *DesignDoc
+
 func TestMultipleView(t *testing.T) {
 
 	view := NewView("test_view", "doc", "doc.age < 22", "doc.name, doc.age")
@@ -24,10 +26,11 @@ func TestMultipleView(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	desDoc = doc
 }
 
 func TestGetView(t *testing.T) {
-	err, data := DBObject.GetView("test_design", "test_view")
+	err, data := DBObject.GetView(desDoc.Id, "test_view")
 	if err != nil {
 		t.Error("Error :", err)
 	} else {
@@ -45,5 +48,7 @@ func TestRetreiveUpdateDesignDoc(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
+	} else {
+		t.Error("Error while updating document")
 	}
 }

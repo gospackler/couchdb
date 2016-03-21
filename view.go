@@ -104,22 +104,25 @@ func (doc *DesignDoc) AddView(view *View) {
 	}
 }
 
-func (doc *DesignDoc) CheckExists(viewName string) (exists bool) {
+// Returning index as -1 => LastView has it.
+// Otherwise the index returned is in the view.
+// status returns true or false indicating presence.
+func (doc *DesignDoc) CheckExists(viewName string) (int, bool) {
 
-	exists = false // should be false by default.
-	for _, view := range doc.Views {
+	fmt.Println("Checking the existance of ", viewName, " in ", doc.Id)
+	index := 0
+	for index, view := range doc.Views {
 		if viewName == view.Name {
-			exists = true
-			return
+			return index, true
 		}
 	}
 	if doc.LastView != nil {
+		fmt.Println(doc.LastView)
 		if viewName == doc.LastView.Name {
-			exists = true
-			return
+			return -1, true
 		}
 	}
-	return
+	return index, false
 }
 
 // Works on the default Global value and not on config files.
@@ -132,8 +135,10 @@ func (doc *DesignDoc) CreateDoc() (error, []byte) {
 
 func (doc *DesignDoc) SaveDoc() (err error) {
 
-	dbDoc := NewDocument("", "", doc.Db)
+	dbDoc := NewDocument(doc.Id, "", doc.Db)
 	err, data := doc.CreateDoc()
+	fmt.Println("Trying to create \n \n", string(data))
+
 	if err == nil {
 		err = dbDoc.Create(data)
 	}

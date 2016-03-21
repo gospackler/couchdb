@@ -66,7 +66,7 @@ func (doc *Document) createOrUpdate(data []byte) (error, *DocCreateResoponse) {
 		return pErr, result
 	}
 	if result.Error != "" {
-		return errors.New(result.Error), result
+		return errors.New("Failure while creating " + result.Error), result
 	}
 	if !result.Ok {
 		return errors.New("Couch returned failure when creating [" + doc.Db.Name + "]"), result

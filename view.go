@@ -30,10 +30,13 @@ func NewView(name string, varName string, condition string, emitStr string) (vie
 		VariableName: varName,
 		Condition:    condition,
 		EmitStr:      emitStr,
+		CondStatus:   true,
 	}
+
 	if condition == "" {
 		view.CondStatus = false
 	}
+	fmt.Println("The condition status is ", view.CondStatus)
 	return
 }
 

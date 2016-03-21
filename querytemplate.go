@@ -2,10 +2,11 @@
 package couchdb
 
 import (
+	"strings"
 	"text/template"
 )
 
-var DESIGNTMPL *template.Template = template.Must(template.New("design").Parse(`
+var DESIGNTMPL *template.Template = template.Must(template.New("design").Parse(strings.Replace(strings.Replace(`
 {
 	"_id": "{{.Id}}",
 	{{if .RevStatus}}
@@ -19,16 +20,12 @@ var DESIGNTMPL *template.Template = template.Must(template.New("design").Parse(`
 			"map": "{{.RawJson}}"
 		   {{else}}
 			"map": "function({{.VariableName}}) { 
-
 				{{if .CondStatus}}
-					if({{.Condition}}) 
-						{
+					if({{.Condition}}) {
 						emit({{.EmitStr}});
 						}
 				{{else}}
-					{
 						emit{{.EmitStr}});
-					}
 				{{end}}
 			}"
 		   {{end}}
@@ -39,10 +36,18 @@ var DESIGNTMPL *template.Template = template.Must(template.New("design").Parse(`
 	            {{if .LastView.RawStatus}}
 			"map": "{{.LastView.RawJson}}"
 		    {{else}}
-			"map": "function({{.LastView.VariableName}}) { if({{.LastView.Condition}})  emit({{.LastView.EmitStr}});}"
+			"map": "function({{.LastView.VariableName}}) { \
+				{{if .LastView.CondStatus}}
+					if({{.LastView.Condition}}) { \
+						emit({{.LastView.EmitStr}}); \
+						} \
+				{{else}} \
+						emit({{.LastView.EmitStr}});\
+				{{end}} \
+			}"
 		    {{end}}
 		   }
 	},
 	"language": "javascript"
 }
-`))
+`, "\\\n", "", -1), "\t", "", -1)))

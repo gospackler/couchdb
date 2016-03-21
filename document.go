@@ -24,8 +24,8 @@ func NewDocument(id string, rev string, Db *Database) *Document {
 type DocCreateResoponse struct {
 	Error string `json:"error"`
 	Ok    bool   `json:"ok"`
-	Id    string `json:"id"`
-	Rev   string `json:"rev"`
+	Id    string `json:"_id"`
+	Rev   string `json:"_rev"`
 }
 
 //Function checks if the document exists and returns error if it does not

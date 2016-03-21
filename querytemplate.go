@@ -18,7 +18,19 @@ var DESIGNTMPL *template.Template = template.Must(template.New("design").Parse(`
 		   {{if .RawStatus}} 
 			"map": "{{.RawJson}}"
 		   {{else}}
-			"map": "function({{.VariableName}}) { if({{.Condition}})  emit({{.EmitStr}});}"
+			"map": "function({{.VariableName}}) { 
+
+				{{if .CondStatus}}
+					if({{.Condition}}) 
+						{
+						emit({{.EmitStr}});
+						}
+				{{else}}
+					{
+						emit{{.EmitStr}});
+					}
+				{{end}}
+			}"
 		   {{end}}
 		   },
 

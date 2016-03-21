@@ -16,6 +16,7 @@ import (
 type View struct {
 	Name         string
 	VariableName string
+	CondStatus   bool
 	Condition    string
 	EmitStr      string
 	RawJson      string
@@ -29,6 +30,9 @@ func NewView(name string, varName string, condition string, emitStr string) (vie
 		VariableName: varName,
 		Condition:    condition,
 		EmitStr:      emitStr,
+	}
+	if condition == "" {
+		view.CondStatus = false
 	}
 	return
 }
@@ -94,6 +98,24 @@ func RetreiveDocFromDb(id string, db *Database) (err error, desDoc *DesignDoc) {
 	return err, desDoc
 }
 
+// Test the DB for the revision of the document.
+func (desDoc *DesignDoc) getRev(doc *Document) (error, string) {
+	result := &DocCreateResoponse{}
+	docBytes, err := doc.GetDocument()
+	if err != nil {
+		return err, ""
+	}
+
+	err = json.Unmarshal(docBytes, result)
+
+	if err != nil {
+		return err, ""
+	}
+
+	fmt.Println("Result", string(docBytes))
+	return nil, result.Rev
+}
+
 func (doc *DesignDoc) AddView(view *View) {
 
 	if doc.LastView == nil {
@@ -136,7 +158,17 @@ func (doc *DesignDoc) CreateDoc() (error, []byte) {
 func (doc *DesignDoc) SaveDoc() (err error) {
 
 	dbDoc := NewDocument(doc.Id, "", doc.Db)
+	err, rev := doc.getRev(dbDoc)
+	if err == nil {
+		// The document already exist
+		doc.Rev = rev
+		doc.RevStatus = true
+	} else {
+		fmt.Println("Could not find revision ", err)
+	}
+
 	err, data := doc.CreateDoc()
+
 	fmt.Println("Trying to create \n \n", string(data))
 
 	if err == nil {

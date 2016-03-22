@@ -19,14 +19,22 @@ var DESIGNTMPL *template.Template = template.Must(template.New("design").Parse(s
 		   {{if .RawStatus}} 
 			"map": "{{.RawJson}}"
 		   {{else}}
-			"map": "function({{.VariableName}}) { 
+			function({{.VariableName}}) { \
+\
+				function get_value(doc, keys) { \
+					var value = {}; \
+					for(key in keys) { \
+						value[keys[key]] = doc[keys[key]];\
+					} \
+					return value; \
+					}\
 				{{if .CondStatus}}
-					if({{.Condition}}) {
-						emit({{.EmitStr}});
-						}
-				{{else}}
-						emit{{.EmitStr}});
-				{{end}}
+					if({{.Condition}}) { \
+						emit({{.EmitStr}}); \
+						} \
+				{{else}} \
+						emit({{.VariableName}}._id, get_value({{.VariableName}},  [{{.EmitStr}}]));\
+				{{end}} \
 			}"
 		   {{end}}
 		   },
@@ -36,13 +44,22 @@ var DESIGNTMPL *template.Template = template.Must(template.New("design").Parse(s
 	            {{if .LastView.RawStatus}}
 			"map": "{{.LastView.RawJson}}"
 		    {{else}}
-			"map": "function({{.LastView.VariableName}}) { \
+			"map": " \
+			function({{.LastView.VariableName}}) { \
+\
+				function get_value(doc, keys) { \
+					var value = {}; \
+					for(key in keys) { \
+						value[keys[key]] = doc[keys[key]];\
+					} \
+					return value; \
+					}\
 				{{if .LastView.CondStatus}}
 					if({{.LastView.Condition}}) { \
 						emit({{.LastView.EmitStr}}); \
 						} \
 				{{else}} \
-						emit({{.LastView.EmitStr}});\
+						emit({{.LastView.VariableName}}._id, get_value({{.LastView.VariableName}},  [{{.LastView.EmitStr}}]));\
 				{{end}} \
 			}"
 		    {{end}}

@@ -103,12 +103,21 @@ func RetreiveDocFromDb(id string, db *Database) (err error, desDoc *DesignDoc) {
 
 // Test the DB for the revision of the document.
 func (desDoc *DesignDoc) getRev(doc *Document) (error, string) {
-	result := &DocCreateResoponse{}
+
+	type GetDocResp struct {
+		Error string `json:"error"`
+		Ok    bool   `json:"ok"`
+		Id    string `json:"_id"`
+		Rev   string `json:"_rev"`
+	}
+
+	result := new(GetDocResp)
 	docBytes, err := doc.GetDocument()
 	if err != nil {
 		return err, ""
 	}
 
+	fmt.Println("couch : GetRev document json Resp:", string(docBytes))
 	err = json.Unmarshal(docBytes, result)
 
 	if err != nil {

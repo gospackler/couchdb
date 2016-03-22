@@ -78,7 +78,7 @@ func (db *Database) Create() error {
 	_, body, _ := db.Req.Put("").End()
 	result := response{}
 	pErr := json.Unmarshal([]byte(body), &result)
-	log.Info(result, body)
+	log.Info("couch : Create : Result, JsonResp", result, body)
 	if pErr != nil {
 		return pErr
 	}

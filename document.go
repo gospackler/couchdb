@@ -24,8 +24,8 @@ func NewDocument(id string, rev string, Db *Database) *Document {
 type DocCreateResoponse struct {
 	Error string `json:"error"`
 	Ok    bool   `json:"ok"`
-	Id    string `json:"_id"`
-	Rev   string `json:"_rev"`
+	Id    string `json:"id"`
+	Rev   string `json:"rev"`
 }
 
 //Function checks if the document exists and returns error if it does not
@@ -61,6 +61,7 @@ func (doc *Document) createOrUpdate(data []byte) (error, *DocCreateResoponse) {
 
 	result := &DocCreateResoponse{}
 	pErr := json.Unmarshal([]byte(body), result)
+	log.Info("couch : createOrUpdate json resp:", body)
 	log.Info(result)
 	if pErr != nil {
 		return pErr, result

@@ -28,9 +28,9 @@ var DESIGNTMPL *template.Template = template.Must(template.New("design").Parse(s
 					} \
 					return value; \
 					}\
-				{{if .CondStatus}}
+				{{if .CondStatus}}\
 					if({{.Condition}}) { \
-						emit({{.EmitStr}}); \
+						emit({{.VariableName}}._id, get_value({{.VariableName}},  [{{.EmitStr}}]));\
 						} \
 				{{else}} \
 						emit({{.VariableName}}._id, get_value({{.VariableName}},  [{{.EmitStr}}]));\
@@ -54,9 +54,9 @@ var DESIGNTMPL *template.Template = template.Must(template.New("design").Parse(s
 					} \
 					return value; \
 					}\
-				{{if .LastView.CondStatus}}
+				{{if .LastView.CondStatus}}\
 					if({{.LastView.Condition}}) { \
-						emit({{.LastView.EmitStr}}); \
+						emit({{.LastView.VariableName}}._id, get_value({{.LastView.VariableName}},  [{{.LastView.EmitStr}}]));\
 						} \
 				{{else}} \
 						emit({{.LastView.VariableName}}._id, get_value({{.LastView.VariableName}},  [{{.LastView.EmitStr}}]));\

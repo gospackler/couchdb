@@ -9,8 +9,10 @@ package couchdb
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
+	"strings"
+
+	"encoding/json"
 )
 
 type View struct {
@@ -90,7 +92,8 @@ func RetreiveDocFromDb(id string, db *Database) (err error, desDoc *DesignDoc) {
 				view := &View{}
 				view.Name = viewName
 				view.RawStatus = true
-				view.RawJson = Data.Map
+				// Retrieve with the
+				view.RawJson = strings.Replace(Data.Map, "\"", "\\\"", -1)
 				desDoc.AddView(view)
 			}
 		}

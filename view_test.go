@@ -41,6 +41,7 @@ func TestGetView(t *testing.T) {
 func TestRetreiveUpdateDesignDoc(t *testing.T) {
 
 	err, desDoc := RetreiveDocFromDb("test_design", &DBObject)
+	t.Log(desDoc)
 	if err == nil {
 		desDoc.Views[0].Name = "test_view_updated"
 		desDoc.RevStatus = true

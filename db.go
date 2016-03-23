@@ -71,18 +71,19 @@ func (db *Database) Exists() (bool, error) {
 // Create creates a new database
 func (db *Database) Create() error {
 	type response struct {
-		Error string `json:"error"`
-		Ok    bool   `json:"ok"`
+		Error  string `json:"error"`
+		Reason string `json:"reason"`
+		Ok     bool   `json:"ok"`
 	}
 	_, body, _ := db.Req.Put("").End()
 	result := response{}
 	pErr := json.Unmarshal([]byte(body), &result)
-	log.Info(result)
+	log.Info("couch : Create : Result, JsonResp", result, body)
 	if pErr != nil {
 		return pErr
 	}
 	if result.Error != "" {
-		return errors.New(result.Error)
+		return errors.New(result.Error + " " + result.Reason)
 	}
 	if !result.Ok {
 		return errors.New("Couch returned failure when creating [" + db.Name + "]")
@@ -110,7 +111,7 @@ func (db *Database) GetView(docName string, viewName string) (error, []byte) {
 	}
 
 	if viewResp.Error != "" {
-		err = errors.New(viewResp.Reason)
+		err = errors.New(viewResp.Error + " " + viewResp.Reason)
 		return err, nil
 	}
 

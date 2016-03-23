@@ -9,13 +9,16 @@ package couchdb
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
+	"strings"
+
+	"encoding/json"
 )
 
 type View struct {
 	Name         string
 	VariableName string
+	CondStatus   bool
 	Condition    string
 	EmitStr      string
 	RawJson      string
@@ -29,7 +32,13 @@ func NewView(name string, varName string, condition string, emitStr string) (vie
 		VariableName: varName,
 		Condition:    condition,
 		EmitStr:      emitStr,
+		CondStatus:   true,
 	}
+
+	if condition == "" {
+		view.CondStatus = false
+	}
+	fmt.Println("The condition status is ", view.CondStatus)
 	return
 }
 
@@ -83,7 +92,8 @@ func RetreiveDocFromDb(id string, db *Database) (err error, desDoc *DesignDoc) {
 				view := &View{}
 				view.Name = viewName
 				view.RawStatus = true
-				view.RawJson = Data.Map
+				// Retrieve with the
+				view.RawJson = strings.Replace(Data.Map, "\"", "\\\"", -1)
 				desDoc.AddView(view)
 			}
 		}
@@ -92,6 +102,33 @@ func RetreiveDocFromDb(id string, db *Database) (err error, desDoc *DesignDoc) {
 		fmt.Println(err)
 	}
 	return err, desDoc
+}
+
+// Test the DB for the revision of the document.
+func (desDoc *DesignDoc) getRev(doc *Document) (error, string) {
+
+	type GetDocResp struct {
+		Error string `json:"error"`
+		Ok    bool   `json:"ok"`
+		Id    string `json:"_id"`
+		Rev   string `json:"_rev"`
+	}
+
+	result := new(GetDocResp)
+	docBytes, err := doc.GetDocument()
+	if err != nil {
+		return err, ""
+	}
+
+	fmt.Println("couch : GetRev document json Resp:", string(docBytes))
+	err = json.Unmarshal(docBytes, result)
+
+	if err != nil {
+		return err, ""
+	}
+
+	fmt.Println("Result", string(docBytes))
+	return nil, result.Rev
 }
 
 func (doc *DesignDoc) AddView(view *View) {
@@ -104,22 +141,25 @@ func (doc *DesignDoc) AddView(view *View) {
 	}
 }
 
-func (doc *DesignDoc) CheckExists(viewName string) (exists bool) {
+// Returning index as -1 => LastView has it.
+// Otherwise the index returned is in the view.
+// status returns true or false indicating presence.
+func (doc *DesignDoc) CheckExists(viewName string) (int, bool) {
 
-	exists = false // should be false by default.
-	for _, view := range doc.Views {
+	fmt.Println("Checking the existance of ", viewName, " in ", doc.Id)
+	index := 0
+	for index, view := range doc.Views {
 		if viewName == view.Name {
-			exists = true
-			return
+			return index, true
 		}
 	}
 	if doc.LastView != nil {
+		fmt.Println(doc.LastView)
 		if viewName == doc.LastView.Name {
-			exists = true
-			return
+			return -1, true
 		}
 	}
-	return
+	return index, false
 }
 
 // Works on the default Global value and not on config files.
@@ -132,8 +172,20 @@ func (doc *DesignDoc) CreateDoc() (error, []byte) {
 
 func (doc *DesignDoc) SaveDoc() (err error) {
 
-	dbDoc := NewDocument("", "", doc.Db)
+	dbDoc := NewDocument(doc.Id, "", doc.Db)
+	err, rev := doc.getRev(dbDoc)
+	if err == nil {
+		// The document already exist
+		doc.Rev = rev
+		doc.RevStatus = true
+	} else {
+		fmt.Println("Could not find revision ", err)
+	}
+
 	err, data := doc.CreateDoc()
+
+	fmt.Println("Trying to create \n \n", string(data))
+
 	if err == nil {
 		err = dbDoc.Create(data)
 	}

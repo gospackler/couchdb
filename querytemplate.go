@@ -19,6 +19,7 @@ var DESIGNTMPL *template.Template = template.Must(template.New("design").Parse(s
 		   {{if .RawStatus}} 
 			"map": "{{.RawJson}}"
 		   {{else}}
+			"map": " \
 			function({{.VariableName}}) { \
 \
 				function get_value(doc, keys) { \

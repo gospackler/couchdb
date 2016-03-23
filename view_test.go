@@ -8,13 +8,13 @@ var desDoc *DesignDoc
 
 func TestMultipleView(t *testing.T) {
 
-	view := NewView("test_view", "doc", "doc.age < 22", "doc.name, doc.age")
+	view := NewView("test_view", "doc", "doc.age < 22", "\\\"name\\\", \\\"age\\\"")
 
 	view2 := NewView("raw_view", "", "", "")
 	view2.RawStatus = true
 	view2.RawJson = "function(rawDoc) {console.log(1234)}"
 
-	fView := NewView("fred_view", "newVar", "newVar.age > 22", "newVar.name, newVar.age")
+	fView := NewView("fred_view", "newVar", "newVar.age > 22", "\\\"name\\\", \\\"age\\\"")
 
 	doc := NewDesignDoc("test_design", &DBObject)
 

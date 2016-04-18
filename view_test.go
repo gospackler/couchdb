@@ -29,13 +29,18 @@ func TestMultipleView(t *testing.T) {
 	desDoc = doc
 }
 
-func TestGetView(t *testing.T) {
-	err, data := DBObject.GetView(desDoc.Id, "test_view")
+func getView(key string, t *testing.T) {
+
+	err, data := DBObject.GetView(desDoc.Id, "test_view", key)
 	if err != nil {
 		t.Error("Error :", err)
 	} else {
 		t.Log(string(data))
 	}
+}
+
+func TestGetView(t *testing.T) {
+	getView("", t)
 }
 
 func TestRetreiveUpdateDesignDoc(t *testing.T) {
@@ -52,4 +57,9 @@ func TestRetreiveUpdateDesignDoc(t *testing.T) {
 	} else {
 		t.Error("Error while updating document")
 	}
+}
+
+func TestGetKeyFromView(t *testing.T) {
+
+	getView("\"8f752bab6b055d0702563c3672000979\"", t)
 }

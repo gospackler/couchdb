@@ -7,6 +7,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 )
 
+// Document either has an Id, Rev and the DB it connects to.
 type Document struct {
 	Db  *Database
 	Id  string `json:"_id"`
@@ -100,8 +101,7 @@ func (doc *Document) Update(data []byte) (err error) {
 	return
 }
 
-// Gets the document using the given id and error if it does not exist.
-func (doc *Document) GetDocument() ([]byte, error) {
+func (doc *Document) getDocFromId() ([]byte, error) {
 
 	err := doc.Exists()
 	if err == nil {
@@ -111,4 +111,14 @@ func (doc *Document) GetDocument() ([]byte, error) {
 	} else {
 		return nil, err
 	}
+}
+
+// Gets the document using the given id and error if it does not exist.
+func (doc *Document) GetDocument() ([]byte, error) {
+
+	if doc.Id != "" {
+		return doc.getDocFromId()
+	}
+
+	return nil, errors.New("An id required to search for the document.")
 }

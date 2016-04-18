@@ -103,7 +103,7 @@ Requesting a view.
 ```go
 //arguments are @designDoc - followed by test_view
 
-err, data := DBObject.GetView("test_design", "test_view")
+err, data := DBObject.GetView("test_design", "test_view", "")
 if err != nil {
 	t.Error("Error :", err)
 } else {

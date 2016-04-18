@@ -92,15 +92,21 @@ func (db *Database) Create() error {
 	return nil
 }
 
-func (db *Database) GetView(docName string, viewName string) (error, []byte) {
+func (db *Database) GetView(docName string, viewName string, key string) (error, []byte) {
 	type ViewResponse struct {
 		Error  string `json:"error"`
 		Reason string `json:"reason"`
 	}
 
-	prefix := docName + "/_view/" + viewName
-	log.Info("Getting view name " + prefix)
-	_, body, _ := db.Req.Get(prefix).End()
+	var body string
+	if key == "" {
+		prefix := docName + "/_view/" + viewName
+		log.Info("Getting view name " + prefix)
+		_, body, _ = db.Req.Get(prefix).End()
+	} else {
+		prefix := docName + "/_view/" + viewName
+		_, body, _ = db.Req.Get(prefix).Query("key=" + key).End()
+	}
 
 	viewResp := &ViewResponse{}
 	err := json.Unmarshal([]byte(body), viewResp)

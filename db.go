@@ -94,6 +94,8 @@ func (db *Database) Create() error {
 }
 
 func (db *Database) GetView(docName string, viewName string, key string) ([]byte, error) {
+
+	log.Print("couch : GetView key " + key + " in viewName " + viewName + " of desDoc " + docName)
 	type ViewResponse struct {
 		Error  string `json:"error"`
 		Reason string `json:"reason"`
@@ -106,6 +108,7 @@ func (db *Database) GetView(docName string, viewName string, key string) ([]byte
 		log.Info("Getting view name " + prefix)
 		_, body, errs = db.Req.Get(prefix).End()
 	} else {
+		key = "\"" + key + "\""
 		prefix := docName + "/_view/" + viewName
 		_, body, errs = db.Req.Get(prefix).Query("key=" + key).End()
 	}

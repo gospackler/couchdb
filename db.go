@@ -95,7 +95,7 @@ func (db *Database) Create() error {
 
 func (db *Database) GetView(docName string, viewName string, key string) ([]byte, error) {
 
-	log.Print("couch : GetView key " + key + " in viewName " + viewName + " of desDoc " + docName)
+	log.Printf("couch : GetView key %s in viewName %s of desDoc %s", key, viewName, docName)
 	type ViewResponse struct {
 		Error  string `json:"error"`
 		Reason string `json:"reason"`
@@ -108,13 +108,13 @@ func (db *Database) GetView(docName string, viewName string, key string) ([]byte
 		log.Info("Getting view name " + prefix)
 		_, body, errs = db.Req.Get(prefix).End()
 	} else {
-		key = "\"" + key + "\""
+		key = `"` + key + `"`
 		prefix := docName + "/_view/" + viewName
 		_, body, errs = db.Req.Get(prefix).Query("key=" + key).End()
 	}
 
 	if len(errs) > 0 {
-		return nil, errors.New("Database : " + fmt.Sprint("%v", errs))
+		return nil, errors.New("Database : Error making request " + fmt.Sprint("%v", errs))
 	}
 	viewResp := &ViewResponse{}
 	err := json.Unmarshal([]byte(body), viewResp)

@@ -4,6 +4,7 @@ package couchdb
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 
 	log "github.com/Sirupsen/logrus"
@@ -99,15 +100,19 @@ func (db *Database) GetView(docName string, viewName string, key string) (error,
 	}
 
 	var body string
+	var errs []error
 	if key == "" {
 		prefix := docName + "/_view/" + viewName
 		log.Info("Getting view name " + prefix)
-		_, body, _ = db.Req.Get(prefix).End()
+		_, body, errs = db.Req.Get(prefix).End()
 	} else {
 		prefix := docName + "/_view/" + viewName
-		_, body, _ = db.Req.Get(prefix).Query("key=" + key).End()
+		_, body, errs = db.Req.Get(prefix).Query("key=" + key).End()
 	}
 
+	if len(errs) > 0 {
+		return errors.New("Database : " + fmt.Sprint("%v", errs)), nil
+	}
 	viewResp := &ViewResponse{}
 	err := json.Unmarshal([]byte(body), viewResp)
 

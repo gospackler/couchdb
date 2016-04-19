@@ -93,7 +93,7 @@ func (db *Database) Create() error {
 	return nil
 }
 
-func (db *Database) GetView(docName string, viewName string, key string) (error, []byte) {
+func (db *Database) GetView(docName string, viewName string, key string) ([]byte, error) {
 	type ViewResponse struct {
 		Error  string `json:"error"`
 		Reason string `json:"reason"`
@@ -111,22 +111,22 @@ func (db *Database) GetView(docName string, viewName string, key string) (error,
 	}
 
 	if len(errs) > 0 {
-		return errors.New("Database : " + fmt.Sprint("%v", errs)), nil
+		return nil, errors.New("Database : " + fmt.Sprint("%v", errs))
 	}
 	viewResp := &ViewResponse{}
 	err := json.Unmarshal([]byte(body), viewResp)
 
 	if err != nil {
 		log.Error(body)
-		return err, nil
+		return nil, err
 	}
 
 	if viewResp.Error != "" {
 		err = errors.New(viewResp.Error + " " + viewResp.Reason)
-		return err, nil
+		return nil, err
 	}
 
-	return nil, []byte(body)
+	return []byte(body), nil
 }
 
 // Delete deletes database

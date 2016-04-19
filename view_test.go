@@ -31,7 +31,7 @@ func TestMultipleView(t *testing.T) {
 
 func getView(key string, t *testing.T) {
 
-	err, data := DBObject.GetView(desDoc.Id, "test_view", key)
+	data, err := DBObject.GetView(desDoc.Id, "test_view", key)
 	if err != nil {
 		t.Error("Error :", err)
 	} else {

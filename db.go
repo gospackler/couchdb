@@ -4,6 +4,7 @@ package couchdb
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 
 	log "github.com/Sirupsen/logrus"
@@ -92,30 +93,43 @@ func (db *Database) Create() error {
 	return nil
 }
 
-func (db *Database) GetView(docName string, viewName string) (error, []byte) {
+func (db *Database) GetView(docName string, viewName string, key string) ([]byte, error) {
+
+	log.Printf("couch : GetView key %s in viewName %s of desDoc %s", key, viewName, docName)
 	type ViewResponse struct {
 		Error  string `json:"error"`
 		Reason string `json:"reason"`
 	}
 
-	prefix := docName + "/_view/" + viewName
-	log.Info("Getting view name " + prefix)
-	_, body, _ := db.Req.Get(prefix).End()
+	var body string
+	var errs []error
+	if key == "" {
+		prefix := docName + "/_view/" + viewName
+		log.Info("Getting view name " + prefix)
+		_, body, errs = db.Req.Get(prefix).End()
+	} else {
+		key = `"` + key + `"`
+		prefix := docName + "/_view/" + viewName
+		_, body, errs = db.Req.Get(prefix).Query("key=" + key).End()
+	}
 
+	if len(errs) > 0 {
+		return nil, errors.New("Database : Error making request " + fmt.Sprint("%v", errs))
+	}
 	viewResp := &ViewResponse{}
 	err := json.Unmarshal([]byte(body), viewResp)
 
 	if err != nil {
 		log.Error(body)
-		return err, nil
+		return nil, err
 	}
 
 	if viewResp.Error != "" {
 		err = errors.New(viewResp.Error + " " + viewResp.Reason)
-		return err, nil
+		return nil, err
 	}
 
-	return nil, []byte(body)
+	return []byte(body), nil
 }
 
 // Delete deletes database

@@ -61,5 +61,5 @@ func TestRetreiveUpdateDesignDoc(t *testing.T) {
 
 func TestGetKeyFromView(t *testing.T) {
 
-	getView("8f752bab6b055d0702563c3672000979", t)
+	getView(Id, t)
 }

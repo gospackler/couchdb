@@ -9,10 +9,10 @@ package couchdb
 
 import (
 	"bytes"
-	"fmt"
+	"encoding/json"
 	"strings"
 
-	"encoding/json"
+	log "github.com/Sirupsen/logrus"
 )
 
 type View struct {
@@ -38,7 +38,7 @@ func NewView(name string, varName string, condition string, emitStr string) (vie
 	if condition == "" {
 		view.CondStatus = false
 	}
-	fmt.Println("The condition status is ", view.CondStatus)
+	log.Debug("The condition status is ", view.CondStatus)
 	return
 }
 
@@ -78,12 +78,12 @@ func RetreiveDocFromDb(id string, db *Database) (err error, desDoc *DesignDoc) {
 	doc := NewDocument("_design/"+id, "", db)
 	data, err := doc.GetDocument()
 	if err == nil {
-		fmt.Println("Data Read ", string(data))
+		log.Debug("Data Read ", string(data))
 		err = json.Unmarshal(data, tempRet)
 		if err != nil {
-			fmt.Println(err)
+			log.Warn(err)
 		} else {
-			fmt.Println("Unmarshalled Json", tempRet)
+			log.Debug("Unmarshalled Json", tempRet)
 			desDoc = &DesignDoc{} // allocating memory
 			desDoc.Id = tempRet.Id
 			desDoc.Db = db
@@ -99,7 +99,7 @@ func RetreiveDocFromDb(id string, db *Database) (err error, desDoc *DesignDoc) {
 		}
 
 	} else {
-		fmt.Println(err)
+		log.Warn(err)
 	}
 	return err, desDoc
 }
@@ -120,14 +120,14 @@ func (desDoc *DesignDoc) getRev(doc *Document) (error, string) {
 		return err, ""
 	}
 
-	fmt.Println("couch : GetRev document json Resp:", string(docBytes))
+	log.Debug("couch : GetRev document json Resp:", string(docBytes))
 	err = json.Unmarshal(docBytes, result)
 
 	if err != nil {
 		return err, ""
 	}
 
-	fmt.Println("Result", string(docBytes))
+	log.Debug("Result", string(docBytes))
 	return nil, result.Rev
 }
 
@@ -146,7 +146,7 @@ func (doc *DesignDoc) AddView(view *View) {
 // status returns true or false indicating presence.
 func (doc *DesignDoc) CheckExists(viewName string) (int, bool) {
 
-	fmt.Println("Checking the existance of ", viewName, " in ", doc.Id)
+	log.Info("Checking the existance of ", viewName, " in ", doc.Id)
 	index := 0
 	for index, view := range doc.Views {
 		if viewName == view.Name {
@@ -154,7 +154,7 @@ func (doc *DesignDoc) CheckExists(viewName string) (int, bool) {
 		}
 	}
 	if doc.LastView != nil {
-		fmt.Println(doc.LastView)
+		log.Debug(doc.LastView)
 		if viewName == doc.LastView.Name {
 			return -1, true
 		}
@@ -179,12 +179,12 @@ func (doc *DesignDoc) SaveDoc() (err error) {
 		doc.Rev = rev
 		doc.RevStatus = true
 	} else {
-		fmt.Println("Could not find revision ", err)
+		log.Warn("Could not find revision ", err)
 	}
 
 	err, data := doc.CreateDoc()
 
-	fmt.Println("Trying to create \n \n", string(data))
+	log.Debug("Trying to create \n \n", string(data))
 
 	if err == nil {
 		err = dbDoc.Create(data)

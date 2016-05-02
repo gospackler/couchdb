@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 	"strconv"
+	"strings"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/parnurzeal/gorequest"
@@ -103,14 +105,26 @@ func (db *Database) GetView(docName string, viewName string, key string) ([]byte
 
 	var body string
 	var errs []error
+	var prefix string
+	var superAgent *gorequest.SuperAgent
+
 	if key == "" {
-		prefix := docName + "/_view/" + viewName
+		prefix = docName + "/_view/" + viewName
 		log.Info("Getting view name " + prefix)
 		_, body, errs = db.Req.Get(prefix).End()
 	} else {
-		key = `"` + key + `"`
-		prefix := docName + "/_view/" + viewName
-		_, body, errs = db.Req.Get(prefix).Query("key=" + key).End()
+
+		if !strings.Contains(key, `"`) {
+			key = `"` + key + `"`
+		}
+		val := url.Values{}
+		val.Set("key", key)
+		encodedKey := val.Encode()
+
+		prefix = docName + "/_view/" + viewName
+		superAgent = db.Req.Get(prefix).Query(encodedKey)
+		_, body, errs = superAgent.End()
+		log.Info("Url" + superAgent.Url)
 	}
 
 	if len(errs) > 0 {
@@ -125,10 +139,11 @@ func (db *Database) GetView(docName string, viewName string, key string) ([]byte
 	}
 
 	if viewResp.Error != "" {
-		err = errors.New(viewResp.Error + " " + viewResp.Reason)
+		err = errors.New(viewResp.Error + " " + viewResp.Reason + "\n req " + superAgent.Url)
 		return nil, err
 	}
 
+	log.Info("Returning body", body)
 	return []byte(body), nil
 }
 

@@ -40,7 +40,12 @@ func (doc *Document) Exists() error {
 		return errs[0]
 	} else {
 
-		result := &DocCreateResoponse{}
+		result := &struct {
+			Error string `json:"error"`
+			Ok    bool   `json:"ok"`
+			Id    string `json:"_id"`
+			Rev   string `json:"_rev"`
+		}{}
 		pErr := json.Unmarshal([]byte(body), result)
 		if pErr != nil {
 			return pErr
@@ -49,7 +54,8 @@ func (doc *Document) Exists() error {
 		if result.Error != "" {
 			return errors.New(result.Error)
 		}
-
+		doc.Id = result.Id
+		doc.Rev = result.Rev
 	}
 	return nil
 }
@@ -94,9 +100,23 @@ func (doc *Document) Create(data []byte) (err error) {
 func (doc *Document) Update(data []byte) (err error) {
 
 	err = doc.Exists()
+
 	if err == nil {
+
+		var val map[string]interface{}
+
+		err = json.Unmarshal(data, &val)
+		if err != nil {
+			errors.New("Unmarshalling error " + err.Error())
+		}
+
+		val["_rev"] = doc.Rev
 		// do the update operation.
-		err, _ = doc.createOrUpdate(data)
+		newData, err := json.Marshal(val)
+		if err != nil {
+			return errors.New("Marshalling error of new value in couch " + err.Error())
+		}
+		err, _ = doc.createOrUpdate(newData)
 	}
 	return
 }

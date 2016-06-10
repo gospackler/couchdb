@@ -30,28 +30,34 @@ type DocCreateResoponse struct {
 }
 
 //Function checks if the document exists and returns error if it does not
-func (doc *Document) Exists() error {
+func (doc *Document) Exists() ([]byte, error) {
 
 	// Use the get operation to get it.
 	_, body, errs := doc.Db.Req.Get(doc.Id).End()
 
 	if len(errs) != 0 {
 		//TODO Check other errors if any exists and make one error to return
-		return errs[0]
+		return nil, errs[0]
 	} else {
 
-		result := &DocCreateResoponse{}
+		result := &struct {
+			Error string `json:"error"`
+			Ok    bool   `json:"ok"`
+			Id    string `json:"_id"`
+			Rev   string `json:"_rev"`
+		}{}
 		pErr := json.Unmarshal([]byte(body), result)
 		if pErr != nil {
-			return pErr
+			return nil, pErr
 		}
 
 		if result.Error != "" {
-			return errors.New(result.Error)
+			return nil, errors.New(result.Error)
 		}
-
+		doc.Id = result.Id
+		doc.Rev = result.Rev
 	}
-	return nil
+	return []byte(body), nil
 }
 
 // Does the document update in couch given a wrapped couch object with DB Exist error status
@@ -89,28 +95,59 @@ func (doc *Document) Create(data []byte) (err error) {
 	return
 }
 
+// Do not throw away content in the old body just update the ones in the new one with the old one.
+func (doc *Document) updateDocument(oldBody []byte, newBody []byte) ([]byte, error) {
+
+	var oldBodyMap map[string]interface{}
+	var newBodyMap map[string]interface{}
+	err := json.Unmarshal(oldBody, &oldBodyMap)
+	if err != nil {
+		return nil, errors.New("Unmarshalling error " + err.Error())
+	}
+
+	err = json.Unmarshal(newBody, &newBodyMap)
+	if err != nil {
+		return nil, errors.New("Unmarshalling error " + err.Error())
+	}
+
+	// Update old data with new contents.
+	for newKey, newValue := range newBodyMap {
+		oldBodyMap[newKey] = newValue
+	}
+
+	oldBodyMap["_rev"] = doc.Rev
+	// do the update operation.
+	newData, err := json.Marshal(oldBodyMap)
+	if err != nil {
+		return nil, errors.New("Marshalling error of new value in couch " + err.Error())
+	}
+	return newData, nil
+}
+
 // Updates the document with the new Data.
 // Data contains an encoded marshalled object that has the required fields, pre computed..
-func (doc *Document) Update(data []byte) (err error) {
+func (doc *Document) Update(newBody []byte) (err error) {
 
-	err = doc.Exists()
+	oldBody, err := doc.Exists()
+
 	if err == nil {
-		// do the update operation.
-		err, _ = doc.createOrUpdate(data)
+
+		newData, err := doc.updateDocument(oldBody, newBody)
+		if err != nil {
+			return errors.New("Update document error " + err.Error())
+		}
+		err, _ = doc.createOrUpdate(newData)
 	}
 	return
 }
 
 func (doc *Document) getDocFromId() ([]byte, error) {
 
-	err := doc.Exists()
-	if err == nil {
-		// Use the get operation to get it.
-		_, body, _ := doc.Db.Req.Get(doc.Id).End()
-		return []byte(body), nil
-	} else {
+	body, err := doc.Exists()
+	if err != nil {
 		return nil, err
 	}
+	return body, nil
 }
 
 // Gets the document using the given id and error if it does not exist.

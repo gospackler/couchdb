@@ -31,7 +31,6 @@ type DocCreateResoponse struct {
 
 //Function checks if the document exists and returns error if it does not
 func (doc *Document) Exists() ([]byte, error) {
-
 	// Use the get operation to get it.
 	_, body, errs := doc.Db.Req.Get(doc.Id).End()
 
@@ -93,6 +92,26 @@ func (doc *Document) Create(data []byte) (err error) {
 	doc.Id = docResp.Id
 	doc.Rev = docResp.Rev
 	return
+}
+
+func (doc *Document) Delete() (err error) {
+	if doc.Id == "" {
+		return errors.New("An id required to delete a document.")
+	}
+	_, err = doc.getDocFromId()
+	if err != nil {
+		return err
+	}
+	_, body, errs := doc.Db.Req.Delete(doc.Id).Query("rev=" + doc.Rev).End()
+	log.Debug("Deleting " + doc.Id)
+	log.Debug("Delete Rev " + doc.Rev)
+	log.Debug("Delete Body " + body)
+	if len(errs) != 0 {
+		// This should contain the reason for failure.
+		err = errors.New(string(body))
+	}
+	return
+
 }
 
 // Do not throw away content in the old body just update the ones in the new one with the old one.

@@ -14,7 +14,6 @@ var Id string
 var Rev string
 
 func TestCreateDocument(t *testing.T) {
-
 	testObj := &TestObj{
 		Name: "Fred",
 		Age:  18,
@@ -39,7 +38,6 @@ func TestCreateDocument(t *testing.T) {
 }
 
 func TestUpdateDocument(t *testing.T) {
-
 	type UpdateObj struct {
 		CouchWrapperUpdate
 		TestObj
@@ -66,7 +64,6 @@ func TestUpdateDocument(t *testing.T) {
 }
 
 func TestGetObject(t *testing.T) {
-
 	doc := NewDocument(Id, Rev, &DBObject)
 	jsonObj, err := doc.GetDocument()
 	if err != nil {
@@ -83,4 +80,14 @@ func TestGetObject(t *testing.T) {
 	if obj.Id != Id {
 		t.Error("Id should be the same as requested")
 	}
+}
+
+func TestDelete(t *testing.T) {
+	t.Log("Trying to delete " + Id + " " + Rev)
+	doc := NewDocument(Id, Rev, &DBObject)
+	err := doc.Delete()
+	if err != nil {
+		t.Errorf("Deletion error " + err.Error())
+	}
+
 }

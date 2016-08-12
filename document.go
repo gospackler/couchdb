@@ -94,11 +94,11 @@ func (doc *Document) Create(data []byte) (err error) {
 	return
 }
 
-func (doc *Document) Delete() (err error) {
+func (doc *Document) Delete() error {
 	if doc.Id == "" {
 		return errors.New("An id required to delete a document.")
 	}
-	_, err = doc.getDocFromId()
+	_, err := doc.getDocFromId()
 	if err != nil {
 		return err
 	}
@@ -107,11 +107,15 @@ func (doc *Document) Delete() (err error) {
 	log.Debug("Delete Rev " + doc.Rev)
 	log.Debug("Delete Body " + body)
 	if len(errs) != 0 {
+		errStr := ""
+		for _, err := range errs {
+			errStr += err.Error() + " "
+		}
+		errStr += body
 		// This should contain the reason for failure.
-		err = errors.New(string(body))
+		err = errors.New(errStr)
 	}
-	return
-
+	return err
 }
 
 // Do not throw away content in the old body just update the ones in the new one with the old one.

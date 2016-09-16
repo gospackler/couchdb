@@ -10,7 +10,6 @@ package couchdb
 import (
 	"bytes"
 	"encoding/json"
-	"strings"
 
 	log "github.com/Sirupsen/logrus"
 )
@@ -22,7 +21,6 @@ type View struct {
 	Condition    string
 	EmitStr      string
 	RawJson      string
-	RawStatus    bool
 }
 
 func NewView(name string, varName string, condition string, emitStr string) (view *View) {
@@ -62,16 +60,11 @@ func NewDesignDoc(id string, db *Database) (doc *DesignDoc) {
 
 func RetreiveDocFromDb(id string, db *Database) (err error, desDoc *DesignDoc) {
 
-	type ViewObj struct {
-		Map    string `json:"map"`
-		Reduce string `json:"reduce"`
-	}
-
 	type TempRetrieve struct {
-		Id       string             `json:"_id"`
-		Rev      string             `json:"_rev"`
-		Language string             `json:"language"`
-		Views    map[string]ViewObj `json:"views"`
+		Id       string                     `json:"_id"`
+		Rev      string                     `json:"_rev"`
+		Language string                     `json:"language"`
+		Views    map[string]json.RawMessage `json:"views"`
 	}
 
 	tempRet := &TempRetrieve{}
@@ -91,9 +84,8 @@ func RetreiveDocFromDb(id string, db *Database) (err error, desDoc *DesignDoc) {
 			for viewName, Data := range tempRet.Views {
 				view := &View{}
 				view.Name = viewName
-				view.RawStatus = true
-				// Retrieve with the
-				view.RawJson = strings.Replace(Data.Map, "\"", "\\\"", -1)
+				// Removing the prefix and suffix.
+				view.RawJson = string(Data)[1 : len(string(Data))-1]
 				desDoc.AddView(view)
 			}
 		}

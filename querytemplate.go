@@ -16,8 +16,8 @@ var DESIGNTMPL *template.Template = template.Must(template.New("design").Parse(s
 		{{range .Views}}
 
 		   "{{.Name}}": {
-		   {{if .RawStatus}} 
-			"map": "{{.RawJson}}"
+		   {{if .RawJson}}
+			{{.RawJson}}
 		   {{else}}
 			"map": " \
 			function({{.VariableName}}) { \
@@ -42,8 +42,8 @@ var DESIGNTMPL *template.Template = template.Must(template.New("design").Parse(s
 
 		{{end}}
 		   "{{.LastView.Name}}": {
-	            {{if .LastView.RawStatus}}
-			"map": "{{.LastView.RawJson}}"
+	            {{if .LastView.RawJson}}
+			{{.LastView.RawJson}}
 		    {{else}}
 			"map": " \
 			function({{.LastView.VariableName}}) { \

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
-	"strings"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/parnurzeal/gorequest"
@@ -95,9 +94,9 @@ func (db *Database) Create() error {
 	return nil
 }
 
-func (db *Database) GetView(docName string, viewName string, key string) ([]byte, error) {
+func (db *Database) GetView(docName string, viewName string, query string) ([]byte, error) {
 
-	log.Printf("couch : GetView key %s in viewName %s of desDoc %s", key, viewName, docName)
+	log.Printf("couch : GetView query %s in viewName %s of desDoc %s", query, viewName, docName)
 	type ViewResponse struct {
 		Error  string `json:"error"`
 		Reason string `json:"reason"`
@@ -108,18 +107,16 @@ func (db *Database) GetView(docName string, viewName string, key string) ([]byte
 	var prefix string
 	var superAgent *gorequest.SuperAgent
 
-	if key == "" {
+	if query == "" {
 		prefix = docName + "/_view/" + viewName
 		log.Info("Getting view name " + prefix)
 		_, body, errs = db.Req.Get(prefix).End()
 	} else {
-
-		if !strings.Contains(key, `"`) {
-			key = `"` + key + `"`
+		values, err := url.ParseQuery(query)
+		if err != nil {
+			return nil, errors.New("Unable to parse query string: " + query)
 		}
-		val := url.Values{}
-		val.Set("key", key)
-		encodedKey := val.Encode()
+		encodedKey := values.Encode()
 
 		prefix = docName + "/_view/" + viewName
 		superAgent = db.Req.Get(prefix).Query(encodedKey)

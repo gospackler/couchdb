@@ -80,7 +80,7 @@ func (db *Database) Create() error {
 	_, body, _ := db.Req.Put("").End()
 	result := response{}
 	pErr := json.Unmarshal([]byte(body), &result)
-	log.Info("couch : Create : Result, JsonResp", result, body)
+	log.Debug("couch : Create : Result, JsonResp", result, body)
 	if pErr != nil {
 		return pErr
 	}
@@ -96,7 +96,7 @@ func (db *Database) Create() error {
 
 func (db *Database) GetView(docName string, viewName string, query string) ([]byte, error) {
 
-	log.Printf("couch : GetView query %s in viewName %s of desDoc %s", query, viewName, docName)
+	log.Debugf("couch : GetView query %s in viewName %s of desDoc %s", query, viewName, docName)
 	type ViewResponse struct {
 		Error  string `json:"error"`
 		Reason string `json:"reason"`
@@ -109,7 +109,7 @@ func (db *Database) GetView(docName string, viewName string, query string) ([]by
 
 	if query == "" {
 		prefix = docName + "/_view/" + viewName
-		log.Info("Getting view name " + prefix)
+		log.Debug("Getting view name " + prefix)
 		_, body, errs = db.Req.Get(prefix).End()
 	} else {
 		values, err := url.ParseQuery(query)
@@ -121,7 +121,7 @@ func (db *Database) GetView(docName string, viewName string, query string) ([]by
 		prefix = docName + "/_view/" + viewName
 		superAgent = db.Req.Get(prefix).Query(encodedKey)
 		_, body, errs = superAgent.End()
-		log.Info("Url" + superAgent.Url)
+		log.Debug("Url" + superAgent.Url + encodedKey)
 	}
 
 	if len(errs) > 0 {
@@ -140,7 +140,7 @@ func (db *Database) GetView(docName string, viewName string, query string) ([]by
 		return nil, err
 	}
 
-	log.Info("Returning body", body)
+	log.Debug("Returning body", body)
 	return []byte(body), nil
 }
 
@@ -153,7 +153,7 @@ func (db *Database) Delete() error {
 	_, body, _ := db.Req.Delete("").End()
 	result := response{}
 	pErr := json.Unmarshal([]byte(body), &result)
-	log.Info(result)
+	log.Debug(result)
 	if pErr != nil {
 		return pErr
 	}

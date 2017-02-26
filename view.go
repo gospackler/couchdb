@@ -17,6 +17,7 @@ import (
 type View struct {
 	Name         string
 	VariableName string
+	KeyName      string
 	CondStatus   bool
 	Condition    string
 	EmitStr      string
@@ -31,6 +32,7 @@ func NewView(name string, varName string, condition string, emitStr string) (vie
 		Condition:    condition,
 		EmitStr:      emitStr,
 		CondStatus:   true,
+		KeyName:      "_id",
 	}
 
 	if condition == "" {

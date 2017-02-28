@@ -32,13 +32,12 @@ func NewView(name string, varName string, condition string, emitStr string) (vie
 		Condition:    condition,
 		EmitStr:      emitStr,
 		CondStatus:   true,
-		KeyName:      "_id",
+		KeyName:      "",
 	}
 
 	if condition == "" {
 		view.CondStatus = false
 	}
-	log.Debug("The condition status is ", view.CondStatus)
 	return
 }
 
@@ -73,12 +72,10 @@ func RetreiveDocFromDb(id string, db *Database) (err error, desDoc *DesignDoc) {
 	doc := NewDocument("_design/"+id, "", db)
 	data, err := doc.GetDocument()
 	if err == nil {
-		log.Debug("Data Read ", string(data))
 		err = json.Unmarshal(data, tempRet)
 		if err != nil {
 			log.Warn(err)
 		} else {
-			log.Debug("Unmarshalled Json", tempRet)
 			desDoc = &DesignDoc{} // allocating memory
 			desDoc.Id = tempRet.Id
 			desDoc.Db = db
@@ -114,14 +111,12 @@ func (desDoc *DesignDoc) getRev(doc *Document) (error, string) {
 		return err, ""
 	}
 
-	log.Debug("couch : GetRev document json Resp:", string(docBytes))
 	err = json.Unmarshal(docBytes, result)
 
 	if err != nil {
 		return err, ""
 	}
 
-	log.Debug("Result", string(docBytes))
 	return nil, result.Rev
 }
 
@@ -140,7 +135,6 @@ func (doc *DesignDoc) AddView(view *View) {
 // status returns true or false indicating presence.
 func (doc *DesignDoc) CheckExists(viewName string) (int, bool) {
 
-	log.Info("Checking the existance of ", viewName, " in ", doc.Id)
 	index := 0
 	for index, view := range doc.Views {
 		if viewName == view.Name {
@@ -148,7 +142,6 @@ func (doc *DesignDoc) CheckExists(viewName string) (int, bool) {
 		}
 	}
 	if doc.LastView != nil {
-		log.Debug(doc.LastView)
 		if viewName == doc.LastView.Name {
 			return -1, true
 		}
@@ -177,8 +170,6 @@ func (doc *DesignDoc) SaveDoc() (err error) {
 	}
 
 	err, data := doc.CreateDoc()
-
-	log.Debug("Trying to create \n \n", string(data))
 
 	if err == nil {
 		err = dbDoc.Create(data)

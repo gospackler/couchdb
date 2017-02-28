@@ -121,7 +121,7 @@ func (db *Database) GetView(docName string, viewName string, query string) ([]by
 		prefix = docName + "/_view/" + viewName
 		superAgent = db.Req.Get(prefix).Query(encodedKey)
 		_, body, errs = superAgent.End()
-		log.Debug("Url" + superAgent.Url + encodedKey)
+		log.Debug("Url = " + superAgent.Url + "?" + encodedKey)
 	}
 
 	if len(errs) > 0 {

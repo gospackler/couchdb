@@ -31,10 +31,10 @@ var DESIGNTMPL *template.Template = template.Must(template.New("design").Parse(s
 					}\
 				{{if .CondStatus}}\
 					if({{.Condition}}) { \
-						emit({{.VariableName}}.{{.KeyName}}, get_value({{.VariableName}},  [{{.EmitStr}}]));\
+						emit({{.KeyName}}, get_value({{.VariableName}},  [{{.EmitStr}}]));\
 						} \
 				{{else}} \
-						emit({{.VariableName}}.{{.KeyName}}, get_value({{.VariableName}},  [{{.EmitStr}}]));\
+						emit({{.KeyName}}, get_value({{.VariableName}},  [{{.EmitStr}}]));\
 				{{end}} \
 			}"
 		   {{end}}
@@ -57,10 +57,10 @@ var DESIGNTMPL *template.Template = template.Must(template.New("design").Parse(s
 					}\
 				{{if .LastView.CondStatus}}\
 					if({{.LastView.Condition}}) { \
-						emit({{.LastView.VariableName}}.{{.KeyName}}, get_value({{.LastView.VariableName}},  [{{.LastView.EmitStr}}]));\
+						emit({{.LastView.KeyName}}, get_value({{.LastView.VariableName}},  [{{.LastView.EmitStr}}]));\
 						} \
 				{{else}} \
-						emit({{.LastView.VariableName}}.{{.KeyName}}, get_value({{.LastView.VariableName}},  [{{.LastView.EmitStr}}]));\
+						emit({{.LastView.KeyName}}, get_value({{.LastView.VariableName}},  [{{.LastView.EmitStr}}]));\
 				{{end}} \
 			}"
 		    {{end}}

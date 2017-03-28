@@ -32,7 +32,7 @@ func NewView(name string, varName string, condition string, emitStr string) (vie
 		Condition:    condition,
 		EmitStr:      emitStr,
 		CondStatus:   true,
-		KeyName:      "",
+		KeyName:      "_id",
 	}
 
 	if condition == "" {

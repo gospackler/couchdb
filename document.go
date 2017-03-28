@@ -67,8 +67,6 @@ func (doc *Document) createOrUpdate(data []byte) (error, *DocCreateResoponse) {
 
 	result := &DocCreateResoponse{}
 	pErr := json.Unmarshal([]byte(body), result)
-	log.Info("couch : createOrUpdate json resp:", body)
-	log.Info(result)
 	if pErr != nil {
 		return pErr, result
 	}

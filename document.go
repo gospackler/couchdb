@@ -32,22 +32,20 @@ type DocCreateResoponse struct {
 //Function checks if the document exists and returns error if it does not
 func (doc *Document) Exists() ([]byte, error) {
 	// Use the get operation to get it.
-	_, body, errs := doc.Db.Req.Get(doc.Id).End()
+	body, err := doc.Db.Req.Get(doc.Id, nil)
 
-	if len(errs) != 0 {
-		//TODO Check other errors if any exists and make one error to return
-		return nil, errs[0]
+	if err != nil {
+		return nil, err
 	} else {
-
 		result := &struct {
 			Error string `json:"error"`
 			Ok    bool   `json:"ok"`
 			Id    string `json:"_id"`
 			Rev   string `json:"_rev"`
 		}{}
-		pErr := json.Unmarshal([]byte(body), result)
-		if pErr != nil {
-			return nil, pErr
+		err = json.Unmarshal(body, result)
+		if err != nil {
+			return nil, err
 		}
 
 		if result.Error != "" {
@@ -56,63 +54,53 @@ func (doc *Document) Exists() ([]byte, error) {
 		doc.Id = result.Id
 		doc.Rev = result.Rev
 	}
-	return []byte(body), nil
+	return body, nil
 }
 
 // Does the document update in couch given a wrapped couch object with DB Exist error status
-func (doc *Document) createOrUpdate(data []byte) (error, *DocCreateResoponse) {
+func (doc *Document) createOrUpdate(data []byte) (*DocCreateResoponse, error) {
 
-	// TODO Fix the errs that are missed while making the request. Its dangerous to ignore.
-	_, body, _ := doc.Db.Req.Post("").Send(string(data)).End()
+	headMap := make(map[string]string)
+	headMap["Content-Type"] = "application/json"
+	body, err := doc.Db.Req.Post("", data, headMap)
+	if err != nil {
+		return nil, err
+	}
 
 	result := &DocCreateResoponse{}
-	pErr := json.Unmarshal([]byte(body), result)
-	if pErr != nil {
-		return pErr, result
+	err = json.Unmarshal(body, result)
+	if err != nil {
+		return nil, err
 	}
 	if result.Error != "" {
-		return errors.New("Failure while creating " + result.Error), result
+		return nil, errors.New("Failure while creating " + result.Error)
 	}
 	if !result.Ok {
-		return errors.New("Couch returned failure when creating [" + doc.Db.Name + "]"), result
+		return nil, errors.New("Couch returned failure when creating [" + doc.Db.Name + "]")
 	}
-	return nil, result
+	return result, nil
 }
 
 // Creates a document if it does not already exist and generates an error if it already exists.
-func (doc *Document) Create(data []byte) (err error) {
-	err, docResp := doc.createOrUpdate(data)
+func (doc *Document) Create(data []byte) error {
+	docResp, err := doc.createOrUpdate(data)
 
 	if err != nil {
-		return
+		return err
 	}
 
 	doc.Id = docResp.Id
 	doc.Rev = docResp.Rev
-	return
+	return err
 }
 
 func (doc *Document) Delete() error {
 	if doc.Id == "" {
 		return errors.New("An id required to delete a document.")
 	}
-	_, err := doc.getDocFromId()
-	if err != nil {
-		return err
-	}
-	_, body, errs := doc.Db.Req.Delete(doc.Id).Query("rev=" + doc.Rev).End()
+	_, err := doc.Db.Req.Delete(doc.Id + "?rev=" + doc.Rev)
 	log.Debug("Deleting " + doc.Id)
 	log.Debug("Delete Rev " + doc.Rev)
-	log.Debug("Delete Body " + body)
-	if len(errs) != 0 {
-		errStr := ""
-		for _, err := range errs {
-			errStr += err.Error() + " "
-		}
-		errStr += body
-		// This should contain the reason for failure.
-		err = errors.New(errStr)
-	}
 	return err
 }
 
@@ -147,33 +135,25 @@ func (doc *Document) updateDocument(oldBody []byte, newBody []byte) ([]byte, err
 
 // Updates the document with the new Data.
 // Data contains an encoded marshalled object that has the required fields, pre computed..
-func (doc *Document) Update(newBody []byte) (err error) {
-
+func (doc *Document) Update(newBody []byte) error {
 	oldBody, err := doc.Exists()
 
 	if err == nil {
-
 		newData, err := doc.updateDocument(oldBody, newBody)
 		if err != nil {
 			return errors.New("Update document error " + err.Error())
 		}
-		err, _ = doc.createOrUpdate(newData)
+		_, err = doc.createOrUpdate(newData)
 	}
-	return
+	return err
 }
 
 func (doc *Document) getDocFromId() ([]byte, error) {
-
-	body, err := doc.Exists()
-	if err != nil {
-		return nil, err
-	}
-	return body, nil
+	return doc.Exists()
 }
 
 // Gets the document using the given id and error if it does not exist.
 func (doc *Document) GetDocument() ([]byte, error) {
-
 	if doc.Id != "" {
 		return doc.getDocFromId()
 	}

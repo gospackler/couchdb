@@ -30,7 +30,15 @@ func TestMultipleView(t *testing.T) {
 
 func getView(key string, t *testing.T) {
 
-	data, err := DBObject.GetView(desDoc.Id, "test_view", key)
+	var data []byte
+	var err error
+	if key != "" {
+		argsMap := make(map[string]string)
+		argsMap["key"] = key
+		data, err = DBObject.GetView(desDoc.Id, "fred_view", argsMap)
+	} else {
+		data, err = DBObject.GetView(desDoc.Id, "fred_view", nil)
+	}
 	if err != nil {
 		t.Error("Error :", err)
 	} else {

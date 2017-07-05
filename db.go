@@ -4,12 +4,8 @@ package couchdb
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
-	"net/url"
+	"net/http"
 	"strconv"
-
-	log "github.com/Sirupsen/logrus"
-	"github.com/parnurzeal/gorequest"
 )
 
 // Database defintes a database client
@@ -18,7 +14,7 @@ type Database struct {
 	Name    string
 	BaseURL string
 	Client  *Client
-	Req     Request
+	Req     *Request
 }
 
 // NewDB creates an instance of a Database
@@ -36,13 +32,19 @@ func NewDB(name string, c *Client) Database {
 	}
 
 	url := protocol + "://" + c.Host + ":" + port + "/" + name
-	req := Request{gorequest.New(), url}
+
+	httpClient := new(http.Client)
 	if c.Timeout != 0 {
-		req.Req.Timeout(c.GetTimeoutDuration())
+		httpClient.Timeout = c.GetTimeoutDuration()
 	}
-	if c.Username != "" && c.Password != "" {
-		req.Req.SetBasicAuth(c.Username, c.Password)
+
+	req := &Request{
+		httpClient,
+		url,
+		c.Username,
+		c.Password,
 	}
+
 	return Database{
 		Name:    name,
 		Client:  c,
@@ -52,111 +54,91 @@ func NewDB(name string, c *Client) Database {
 }
 
 // Exists check to see if database exists
-func (db *Database) Exists() (bool, error) {
-	type response struct {
+func (db *Database) Exists() error {
+	resp := &struct {
 		Error  string `json:"error"`
 		DBName string `json:"db_name"`
+	}{}
+	body, err := db.Req.Get("", nil)
+	if err != nil {
+		return err
 	}
-	_, body, _ := db.Req.Get("").End()
-	result := response{}
-	pErr := json.Unmarshal([]byte(body), &result)
-	if pErr != nil {
-		return false, pErr
+	err = json.Unmarshal(body, resp)
+	if err != nil {
+		return err
 	}
-	if result.DBName != db.Name || result.Error != "" {
-		return false, nil
+	if resp.Error != "" {
+		return errors.New(resp.Error)
 	}
 
-	return true, nil
+	return nil
 }
 
 // Create creates a new database
 func (db *Database) Create() error {
-	type response struct {
+	resp := &struct {
 		Error  string `json:"error"`
 		Reason string `json:"reason"`
 		Ok     bool   `json:"ok"`
+	}{}
+
+	body, err := db.Req.Put("")
+	err = json.Unmarshal(body, resp)
+	if err != nil {
+		return err
 	}
-	_, body, _ := db.Req.Put("").End()
-	result := response{}
-	pErr := json.Unmarshal([]byte(body), &result)
-	log.Debug("couch : Create : Result, JsonResp", result, body)
-	if pErr != nil {
-		return pErr
+
+	if resp.Error != "" {
+		return errors.New(resp.Error + " " + resp.Reason)
 	}
-	if result.Error != "" {
-		return errors.New(result.Error + " " + result.Reason)
-	}
-	if !result.Ok {
+	if !resp.Ok {
 		return errors.New("Couch returned failure when creating [" + db.Name + "]")
 	}
 
 	return nil
 }
 
-func (db *Database) GetView(docName string, viewName string, query string) ([]byte, error) {
-
-	log.Debugf("couch : GetView query %s in viewName %s of desDoc %s", query, viewName, docName)
-	type ViewResponse struct {
+func (db *Database) GetView(docName string, viewName string, args map[string]string) ([]byte, error) {
+	resp := &struct {
 		Error  string `json:"error"`
 		Reason string `json:"reason"`
+	}{}
+
+	prefix := docName + "/_view/" + viewName
+	body, err := db.Req.Get(prefix, args)
+	if err != nil {
+		return nil, err
 	}
-
-	var body string
-	var errs []error
-	var prefix string
-	var superAgent *gorequest.SuperAgent
-
-	if query == "" {
-		prefix = docName + "/_view/" + viewName
-		log.Debug("Getting view name " + prefix)
-		_, body, errs = db.Req.Get(prefix).End()
-	} else {
-		values, err := url.ParseQuery(query)
-		if err != nil {
-			return nil, errors.New("Unable to parse query string: " + query)
-		}
-		encodedKey := values.Encode()
-
-		prefix = docName + "/_view/" + viewName
-		superAgent = db.Req.Get(prefix).Query(encodedKey)
-		_, body, errs = superAgent.End()
-		log.Debug("Url = " + superAgent.Url + "?" + encodedKey)
-	}
-
-	if len(errs) > 0 {
-		return nil, errors.New("Database : Error making request " + fmt.Sprint("%v", errs))
-	}
-	viewResp := &ViewResponse{}
-	err := json.Unmarshal([]byte(body), viewResp)
+	err = json.Unmarshal([]byte(body), resp)
 
 	if err != nil {
-		log.Error(body)
 		return nil, err
 	}
 
-	if viewResp.Error != "" {
-		err = errors.New(viewResp.Error + " " + viewResp.Reason + "\n req " + superAgent.Url)
+	if resp.Error != "" {
+		err = errors.New(resp.Error + " " + resp.Reason + "\n req :" + prefix)
 		return nil, err
 	}
-
-	log.Debug("Returning body", body)
-	return []byte(body), nil
+	return body, nil
 }
 
 // Delete deletes database
 func (db *Database) Delete() error {
-	type response struct {
+	result := &struct {
 		Error string `json:"error"`
 		Ok    bool   `json:"ok"`
+	}{}
+
+	body, err := db.Req.Delete("")
+	if err != nil {
+		return err
 	}
-	_, body, _ := db.Req.Delete("").End()
-	result := response{}
-	pErr := json.Unmarshal([]byte(body), &result)
-	log.Debug(result)
-	if pErr != nil {
-		return pErr
+
+	err = json.Unmarshal(body, result)
+	if err != nil {
+		return err
 	}
+
 	if result.Error != "" {
 		return errors.New(result.Error)
 	}
